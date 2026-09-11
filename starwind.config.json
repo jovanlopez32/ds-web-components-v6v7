@@ -132,6 +132,12 @@
       "version": "1.1.0",
       "framework": "astro",
       "registry": "default"
+    },
+    {
+      "name": "button-group",
+      "version": "1.1.1",
+      "framework": "astro",
+      "registry": "default"
     }
   ],
   "tailwind": {
