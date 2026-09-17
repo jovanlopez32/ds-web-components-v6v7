@@ -1,3 +1,6 @@
+import { button } from '@/components/starwind/button/variants';
+import { input } from '@/components/starwind/input/variants';
+
 interface Props {
 	/** This component's own overrides, edited here. */
 	variables: Record<string, string>;
@@ -48,7 +51,7 @@ export default function VariablesPanel({
 		<section className="variables-panel">
 			<div className="variables-header">
 				<h3>Variables de este componente</h3>
-				<button type="button" onClick={() => add()}>
+				<button type="button" className={button({ variant: 'outline', size: 'sm' })} onClick={() => add()}>
 					Agregar
 				</button>
 			</div>
@@ -68,7 +71,11 @@ export default function VariablesPanel({
 						{missing.map((name) => (
 							<li key={name}>
 								<code>{name}</code>
-								<button type="button" onClick={() => add(name)}>
+								<button
+									type="button"
+									className={button({ variant: 'ghost', size: 'sm' })}
+									onClick={() => add(name)}
+								>
 									Definir
 								</button>
 							</li>
@@ -86,6 +93,7 @@ export default function VariablesPanel({
 				<div className="variables-row" key={index}>
 					<input
 						type="text"
+						className={input({ size: 'sm' })}
 						aria-label="Nombre"
 						placeholder="TXT_IMG_PATH"
 						value={name}
@@ -93,6 +101,7 @@ export default function VariablesPanel({
 					/>
 					<input
 						type="text"
+						className={input({ size: 'sm' })}
 						aria-label="Valor"
 						placeholder="valor"
 						value={value}
@@ -100,7 +109,7 @@ export default function VariablesPanel({
 					/>
 					<button
 						type="button"
-						className="variables-remove"
+						className={`${button({ variant: 'ghost', size: 'icon-sm' })} variables-remove`}
 						aria-label={`Quitar ${name}`}
 						onClick={() => remove(name)}
 					>

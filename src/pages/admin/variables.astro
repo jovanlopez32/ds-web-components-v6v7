@@ -2,9 +2,12 @@
 export const prerender = false;
 
 import { actions } from 'astro:actions';
-import Layout from '../../layouts/Layout.astro';
+import Layout from '../../layouts/AdminLayout.astro';
 import AdminNav from '../../components/AdminNav.astro';
 import { createUserClient } from '../../lib/supabase';
+import { Button } from '@/components/starwind/button';
+import { Input } from '@/components/starwind/input';
+import { Label } from '@/components/starwind/label';
 
 const accessToken = Astro.cookies.get('sb-access-token')?.value;
 
@@ -43,21 +46,22 @@ const saveResult = Astro.getActionResult(actions.variables.save);
 
 		<form method="POST" action={actions.variables.save} class="new-variable">
 			<div>
-				<label for="name">Nombre</label>
-				<input
+				<Label for="name">Nombre</Label>
+				<Input
 					type="text"
 					id="name"
 					name="name"
 					required
 					pattern="[A-Za-z_][A-Za-z0-9_]*"
 					placeholder="TXT_IMG_PATH"
+					size="sm"
 				/>
 			</div>
 			<div>
-				<label for="value">Valor</label>
-				<input type="text" id="value" name="value" placeholder="/images/" />
+				<Label for="value">Valor</Label>
+				<Input type="text" id="value" name="value" placeholder="/images/" size="sm" />
 			</div>
-			<button type="submit">Agregar</button>
+			<Button type="submit" size="sm">Agregar</Button>
 		</form>
 
 		{variables && variables.length === 0 && (
@@ -73,16 +77,17 @@ const saveResult = Astro.getActionResult(actions.variables.save);
 					{/* Each row is its own form so a single Guardar updates just that variable. */}
 					<form method="POST" action={actions.variables.save}>
 						<input type="hidden" name="id" value={variable.id} />
-						<input
+						<Input
 							type="text"
 							name="name"
 							value={variable.name}
 							required
 							pattern="[A-Za-z_][A-Za-z0-9_]*"
 							aria-label="Nombre"
+							size="sm"
 						/>
-						<input type="text" name="value" value={variable.value} aria-label="Valor" />
-						<button type="submit">Guardar</button>
+						<Input type="text" name="value" value={variable.value} aria-label="Valor" size="sm" />
+						<Button type="submit" size="sm">Guardar</Button>
 					</form>
 					<form
 						method="POST"
@@ -90,7 +95,7 @@ const saveResult = Astro.getActionResult(actions.variables.save);
 						onsubmit="return confirm('¿Eliminar esta variable?')"
 					>
 						<input type="hidden" name="id" value={variable.id} />
-						<button type="submit" class="danger">Eliminar</button>
+						<Button type="submit" variant="error" size="sm">Eliminar</Button>
 					</form>
 				</li>
 			))}
@@ -150,10 +155,9 @@ const saveResult = Astro.getActionResult(actions.variables.save);
 		border-radius: 6px;
 		background: #f9fafb;
 	}
-	.new-variable label {
+	.new-variable :global([data-slot='label']) {
 		display: block;
 		font-size: 0.8125rem;
-		font-weight: 600;
 		margin-bottom: 0.25rem;
 	}
 	.empty {
@@ -179,29 +183,8 @@ const saveResult = Astro.getActionResult(actions.variables.save);
 		flex: 1;
 		min-width: 0;
 	}
-	input {
-		padding: 0.45rem 0.55rem;
-		border: 1px solid #d1d5db;
-		border-radius: 4px;
+	:global(input[data-slot='input']) {
 		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-		font-size: 0.8125rem;
 		min-width: 0;
-	}
-	button {
-		padding: 0.45rem 0.9rem;
-		border: 1px solid #111827;
-		border-radius: 4px;
-		background: #111827;
-		color: white;
-		font: inherit;
-		font-size: 0.8125rem;
-		font-weight: 600;
-		cursor: pointer;
-		white-space: nowrap;
-	}
-	button.danger {
-		background: white;
-		border-color: #b91c1c;
-		color: #b91c1c;
 	}
 </style>

@@ -1,0 +1,27 @@
+---
+import DrawerPrimitive from "@starwind-ui/astro/drawer";
+import type { HTMLAttributes } from "astro/types";
+import { drawerBackdrop, drawerContent } from "./variants";
+
+type Props = HTMLAttributes<"dialog"> & {
+  /** CSS selector for the element to portal into. Defaults to `document.body`. */
+  container?: string;
+  side?: "top" | "right" | "bottom" | "left";
+};
+
+const { container, side = "right", class: className, ...rest } = Astro.props;
+---
+
+<DrawerPrimitive.Portal container={container} data-slot="drawer-portal">
+  <slot name="backdrop">
+    <DrawerPrimitive.Backdrop class={drawerBackdrop()} data-slot="drawer-backdrop" />
+  </slot>
+  <DrawerPrimitive.Popup
+    side={side}
+    class={drawerContent({ side, class: className })}
+    {...rest}
+    data-slot="drawer-content"
+  >
+    <slot />
+  </DrawerPrimitive.Popup>
+</DrawerPrimitive.Portal>

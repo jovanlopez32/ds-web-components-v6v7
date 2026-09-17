@@ -2,9 +2,10 @@
 export const prerender = false;
 
 import { actions } from 'astro:actions';
-import Layout from '../../../layouts/Layout.astro';
+import Layout from '../../../layouts/AdminLayout.astro';
 import AdminNav from '../../../components/AdminNav.astro';
 import { createUserClient } from '../../../lib/supabase';
+import { Button } from '@/components/starwind/button';
 
 const { adminSlug } = Astro.params;
 const accessToken = Astro.cookies.get('sb-access-token')?.value;
@@ -29,7 +30,7 @@ const { data: components } = await db
 	.from('components')
 	.select('id, ref, title, created_by_email, updated_at')
 	.eq('page_id', page.id)
-	.order('created_at', { ascending: false });
+	.order('position');
 
 const errorCode = Astro.url.searchParams.get('error');
 ---
@@ -49,14 +50,21 @@ const errorCode = Astro.url.searchParams.get('error');
 
 		<div class="components-header">
 			<h2>Componentes</h2>
-			<a class="new" href={`/admin/pages/${page.admin_slug}/components/new`}>Nuevo componente</a>
+			<Button as="a" href={`/admin/pages/${page.admin_slug}/components/new`} size="sm">Nuevo componente</Button>
 		</div>
 
 		{components && components.length === 0 && <p>Todavía no hay componentes.</p>}
 
 		<ul class="component-list">
 			{components?.map((component) => (
-				<li>
+				<li data-id={component.id}>
+					<span class="drag-handle" title="Arrastrar para reordenar">
+						<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+							<circle cx="9" cy="6" r="1.5" /><circle cx="15" cy="6" r="1.5" />
+							<circle cx="9" cy="12" r="1.5" /><circle cx="15" cy="12" r="1.5" />
+							<circle cx="9" cy="18" r="1.5" /><circle cx="15" cy="18" r="1.5" />
+						</svg>
+					</span>
 					<div class="component-info">
 						<span class="component-title">{component.title}</span>
 						<span class="component-meta">
@@ -81,7 +89,7 @@ const errorCode = Astro.url.searchParams.get('error');
 							onsubmit="return confirm('¿Eliminar este componente?')"
 						>
 							<input type="hidden" name="id" value={component.id} />
-							<button type="submit">Eliminar</button>
+							<Button type="submit" variant="error" size="sm">Eliminar</Button>
 						</form>
 					</div>
 				</li>
@@ -89,6 +97,27 @@ const errorCode = Astro.url.searchParams.get('error');
 		</ul>
 	</main>
 </Layout>
+
+<script>
+	import { actions } from 'astro:actions';
+	import Sortable from 'sortablejs';
+
+	const list = document.querySelector('.component-list');
+	if (list) {
+		Sortable.create(list as HTMLElement, {
+			handle: '.drag-handle',
+			animation: 150,
+			onEnd: async () => {
+				const ids = Array.from(list.children).map((li) => (li as HTMLElement).dataset.id!);
+				const { error } = await actions.components.reorder({ ids });
+				if (error) {
+					alert('No se pudo guardar el nuevo orden.');
+					location.reload();
+				}
+			},
+		});
+	}
+</script>
 
 <style>
 	.page-detail {
@@ -113,14 +142,6 @@ const errorCode = Astro.url.searchParams.get('error');
 		justify-content: space-between;
 		margin-top: 1.5rem;
 	}
-	.new {
-		color: white;
-		background: #111827;
-		padding: 0.5rem 1rem;
-		border-radius: 4px;
-		text-decoration: none;
-		font-weight: 600;
-	}
 	.component-list {
 		list-style: none;
 		padding: 0;
@@ -132,17 +153,33 @@ const errorCode = Astro.url.searchParams.get('error');
 	.component-list li {
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
 		gap: 1rem;
 		padding: 0.6rem 1rem;
 		border: 1px solid #e5e7eb;
 		border-radius: 6px;
+	}
+	.drag-handle {
+		display: flex;
+		flex-shrink: 0;
+		color: #9ca3af;
+		cursor: grab;
+		touch-action: none;
+	}
+	.drag-handle:active {
+		cursor: grabbing;
+	}
+	.sortable-ghost {
+		opacity: 0.4;
+	}
+	.sortable-drag {
+		background: #f9fafb;
 	}
 	.component-info {
 		display: flex;
 		flex-direction: column;
 		gap: 0.2rem;
 		min-width: 0;
+		flex: 1;
 	}
 	.component-title {
 		font-weight: 600;
@@ -165,14 +202,6 @@ const errorCode = Astro.url.searchParams.get('error');
 	}
 	.actions form {
 		display: inline;
-	}
-	.actions button {
-		background: none;
-		border: none;
-		color: #b91c1c;
-		cursor: pointer;
-		font: inherit;
-		padding: 0;
 	}
 	.actions a {
 		color: #111827;

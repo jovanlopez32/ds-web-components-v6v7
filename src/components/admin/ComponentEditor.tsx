@@ -6,6 +6,8 @@ import ComponentPreview, { type PreviewSnapshot } from './ComponentPreview';
 import VariablesPanel from './VariablesPanel';
 import type { PreviewSettings } from '../../lib/preview';
 import type { CodeLanguage } from '../../lib/format';
+import { button } from '@/components/starwind/button/variants';
+import { input } from '@/components/starwind/input/variants';
 
 export interface EditableComponent {
 	id: string;
@@ -205,14 +207,19 @@ export default function ComponentEditor({
 					{isEditing && (
 						<button
 							type="button"
-							className="danger"
+							className={button({ variant: 'error', size: 'sm' })}
 							onClick={handleDelete}
 							disabled={isDeleting || isSaving}
 						>
 							{isDeleting ? 'Eliminando…' : 'Eliminar'}
 						</button>
 					)}
-					<button type="button" onClick={handleSave} disabled={isSaving || isDeleting}>
+					<button
+						type="button"
+						className={button({ size: 'sm' })}
+						onClick={handleSave}
+						disabled={isSaving || isDeleting}
+					>
 						{isSaving ? 'Guardando…' : isEditing ? 'Guardar cambios' : 'Crear componente'}
 					</button>
 				</div>
@@ -238,7 +245,11 @@ export default function ComponentEditor({
 						<dt>Referencia</dt>
 						<dd>
 							<code>{reference}</code>
-							<button type="button" className="editor-copy" onClick={copyReference}>
+							<button
+								type="button"
+								className={`${button({ variant: 'outline', size: 'sm' })} editor-copy`}
+								onClick={copyReference}
+							>
 								{copied ? 'Copiado' : 'Copiar'}
 							</button>
 						</dd>
@@ -250,6 +261,7 @@ export default function ComponentEditor({
 				Título
 				<input
 					type="text"
+					className={input({ size: 'sm' })}
 					value={title}
 					onChange={(event) => setTitle(event.target.value)}
 					placeholder="Ej. Sección What You Need"

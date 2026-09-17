@@ -1,0 +1,13 @@
+---
+import DrawerPrimitive from "@starwind-ui/astro/drawer";
+import type { HTMLAttributes } from "astro/types";
+import { drawerClose } from "./variants";
+
+type Props = HTMLAttributes<"button">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<DrawerPrimitive.Close class={drawerClose({ class: className })} {...rest} data-slot="drawer-close">
+  <slot />
+</DrawerPrimitive.Close>

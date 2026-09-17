@@ -1,8 +1,9 @@
 ---
 export const prerender = false;
 
-import Layout from '../../layouts/Layout.astro';
+import Layout from '../../layouts/AdminLayout.astro';
 import AdminNav from '../../components/AdminNav.astro';
+import { Button } from '@/components/starwind/button';
 
 const user = Astro.locals.user;
 ---
@@ -12,7 +13,7 @@ const user = Astro.locals.user;
 		<header>
 			<h1>Admin</h1>
 			<form action="/api/auth/signout">
-				<button type="submit">Cerrar sesión</button>
+				<Button type="submit" size="sm">Cerrar sesión</Button>
 			</form>
 		</header>
 		<AdminNav />
@@ -31,13 +32,5 @@ const user = Astro.locals.user;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-	}
-	button {
-		padding: 0.4rem 0.8rem;
-		border: none;
-		border-radius: 4px;
-		background: #111827;
-		color: white;
-		cursor: pointer;
 	}
 </style>

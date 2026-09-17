@@ -1,7 +1,10 @@
 ---
 export const prerender = false;
 
-import Layout from '../../../layouts/Layout.astro';
+import Layout from '../../../layouts/AdminLayout.astro';
+import { Button } from '@/components/starwind/button';
+import { Input } from '@/components/starwind/input';
+import { Label } from '@/components/starwind/label';
 
 const error = Astro.url.searchParams.get('error');
 ---
@@ -12,11 +15,11 @@ const error = Astro.url.searchParams.get('error');
 		<form action="/api/admin/create-user" method="post">
 			<h1>Crear cuenta de admin</h1>
 			{error && <p class="error">{error === 'missing_fields' ? 'Ingresa correo y contraseña.' : error}</p>}
-			<label for="email">Correo</label>
-			<input type="email" name="email" id="email" required autocomplete="email" />
-			<label for="password">Contraseña temporal</label>
-			<input type="password" name="password" id="password" required minlength="8" autocomplete="new-password" />
-			<button type="submit">Crear cuenta</button>
+			<Label for="email">Correo</Label>
+			<Input type="email" name="email" id="email" required autocomplete="email" />
+			<Label for="password">Contraseña temporal</Label>
+			<Input type="password" name="password" id="password" required minlength={8} autocomplete="new-password" />
+			<Button type="submit">Crear cuenta</Button>
 		</form>
 	</main>
 </Layout>
@@ -36,18 +39,5 @@ const error = Astro.url.searchParams.get('error');
 	.error {
 		color: #b91c1c;
 		margin: 0;
-	}
-	input {
-		padding: 0.5rem;
-		border: 1px solid #ccc;
-		border-radius: 4px;
-	}
-	button {
-		padding: 0.6rem;
-		border: none;
-		border-radius: 4px;
-		background: #111827;
-		color: white;
-		cursor: pointer;
 	}
 </style>

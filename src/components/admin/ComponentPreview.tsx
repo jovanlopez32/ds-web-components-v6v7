@@ -8,6 +8,7 @@ import {
 } from '../../lib/preview';
 import { mergeVariables, resolveAsp } from '../../lib/asp';
 import type { CompileError } from '../../lib/less-server';
+import { button } from '@/components/starwind/button/variants';
 
 /**
  * The code as it was when the author last pressed Compilar.
@@ -141,7 +142,12 @@ export default function ComponentPreview({
 					{snapshot !== null && isStale && (
 						<span className="preview-stale">Código cambiado</span>
 					)}
-					<button type="button" onClick={onCompile} disabled={isCompiling}>
+					<button
+						type="button"
+						className={button({ size: 'sm' })}
+						onClick={onCompile}
+						disabled={isCompiling}
+					>
 						{isCompiling ? 'Compilando…' : 'Compilar'}
 					</button>
 				</div>

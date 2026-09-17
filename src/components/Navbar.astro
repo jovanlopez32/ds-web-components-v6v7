@@ -1,5 +1,8 @@
 ---
+
 import { supabase } from '../lib/supabase';
+import DSLogo from '@/components/DSLogo.svg';
+import { ThemeToggle } from "@/components/starwind/theme-toggle";
 
 import {
 	NavigationMenu,
@@ -13,7 +16,7 @@ import {
 const { data: pages } = await supabase
 	.from('pages')
 	.select('id, parent_id, title, slug')
-	.order('created_at', { ascending: true });
+	.order('position');
 
 const allPages = pages ?? [];
 const topLevel = allPages.filter((page) => !page.parent_id);
@@ -23,15 +26,71 @@ const getChildren = (parentId: string) => {
 };
 ---
 
-<nav class="w-full border-b border-border bg-background">
+<nav class="w-full max-w-5xl left-0 right-0 top-6 mx-auto h-14 fixed bg-gray-400/10 rounded-md bg-clip-padding backdrop-filter backdrop-blur-sm py-1.5 px-3 flex items-center">
+	<a href="/" class="text-xl font-bold tracking-tight text-foreground transition-colors duration-200 hover:text-primary">
+		<DSLogo class="size-7" />
+	</a>
+
+	<div class="hidden h-full items-center md:flex">
+		<NavigationMenu aria-label="Navegación principal">
+			<NavigationMenuList>
+				{
+					topLevel.map((page) => {
+						const children = getChildren(page.id);
+
+						if (children.length > 0) {
+							return (
+								<NavigationMenuItem value={page.slug}>
+									<NavigationMenuTrigger>{page.title}</NavigationMenuTrigger>
+									<NavigationMenuContent>
+										<ul class="w-56">
+											<li>
+												<NavigationMenuLink
+													href={`/${page.slug}`}
+													class="border-b border-border font-semibold"
+												>
+													{page.title}
+												</NavigationMenuLink>
+											</li>
+											{children.map((child) => (
+												<li>
+													<NavigationMenuLink href={`/${child.slug}`}>
+														{child.title}
+													</NavigationMenuLink>
+												</li>
+											))}
+										</ul>
+									</NavigationMenuContent>
+								</NavigationMenuItem>
+							);
+						}
+
+						return (
+							<NavigationMenuItem value={page.slug}>
+								<NavigationMenuLink href={`/${page.slug}`} class={navigationMenuTriggerStyle()}>
+									{page.title}
+								</NavigationMenuLink>
+							</NavigationMenuItem>
+						);
+					})
+				}
+			</NavigationMenuList>
+		</NavigationMenu>
+	</div>
+
+	<ThemeToggle ariaLabel="Toggle theme" />
+
+</nav>
+
+<!-- <nav class="w-full border-b border-border bg-background font-sans">
 	<div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
 
-		<!-- Logo -->
+		Logo
 		<a href="/" class="text-xl font-bold tracking-tight text-foreground transition-colors duration-200 hover:text-primary">
 			LeadVenture
 		</a>
 
-		<!-- Desktop Navigation -->
+		Desktop Navigation
 		<div class="hidden h-full items-center md:flex">
 			<NavigationMenu aria-label="Navegación principal">
 				<NavigationMenuList>
@@ -79,7 +138,7 @@ const getChildren = (parentId: string) => {
 			</NavigationMenu>
 		</div>
 
-		<!-- Mobile Button -->
+		Mobile Button
 		<button
 			type="button"
 			class="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:hidden"
@@ -101,4 +160,4 @@ const getChildren = (parentId: string) => {
 		</button>
 
 	</div>
-</nav>
+</nav> -->

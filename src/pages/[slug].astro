@@ -1,0 +1,80 @@
+---
+// Public route for every page created in /admin. A page there only gets a
+// slug and a list of components; this is what turns that into an actual URL,
+// so the navbar links (which already point to `/${page.slug}`) resolve.
+//
+// On demand: the components a page has can change at any time from the admin.
+export const prerender = false;
+
+import PublicLayout from '../layouts/PublicLayout.astro';
+import CodeComponent from '../components/CodeComponent.astro';
+import { supabase } from '../lib/supabase';
+
+const { slug } = Astro.params;
+
+const { data: page } = await supabase
+	.from('pages')
+	.select('id, title, description')
+	.eq('slug', slug)
+	.maybeSingle();
+
+if (!page) {
+	Astro.response.status = 404;
+}
+
+const { data: components } = page
+	? await supabase
+			.from('components')
+			.select('ref')
+			.eq('page_id', page.id)
+			.order('position')
+	: { data: null };
+---
+
+<PublicLayout title={page ? page.title : 'Página no encontrada'}>
+	<main class="page">
+		{
+			!page ? (
+				<p class="page-missing">No existe ninguna página publicada en esta dirección.</p>
+			) : (
+				<>
+					<header class="page-header">
+						<h1>{page.title}</h1>
+						{page.description && <p class="page-description">{page.description}</p>}
+					</header>
+
+					{(components ?? []).length === 0 ? (
+						<p class="page-empty">Esta página todavía no tiene componentes.</p>
+					) : (
+						(components ?? []).map((component) => <CodeComponent id={component.ref} />)
+					)}
+				</>
+			)
+		}
+	</main>
+</PublicLayout>
+
+<style>
+	.page {
+		max-width: 1539px;
+		margin: 0 auto;
+		padding: 2rem 3rem;
+	}
+	.page-header {
+		margin-bottom: 1.5rem;
+	}
+	.page-header h1 {
+		font-size: 1.75rem;
+		font-weight: 700;
+	}
+	.page-description {
+		margin-top: 0.5rem;
+		color: #6b7280;
+	}
+	.page-missing,
+	.page-empty {
+		padding: 3rem 1rem;
+		text-align: center;
+		color: #6b7280;
+	}
+</style>

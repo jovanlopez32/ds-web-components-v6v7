@@ -2,6 +2,14 @@
 @import "tw-animate-css";
 @plugin "@tailwindcss/forms";
 @custom-variant light (&:where(.light, .light *));
+@import '@fontsource/libre-caslon-text';
+@import '@fontsource-variable/lexend/wght.css';
+
+@theme {
+  --font-sans: 'Lexend Variable', sans-serif;
+  --font-serif: 'Libre Caslon Text', serif;
+}
+
 
 @theme {
   --animate-accordion-down: accordion-down 0.2s ease-out;

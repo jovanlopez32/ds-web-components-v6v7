@@ -1,0 +1,13 @@
+---
+import DrawerPrimitive from "@starwind-ui/astro/drawer";
+import type { HTMLAttributes } from "astro/types";
+import { drawerTitle } from "./variants";
+
+type Props = HTMLAttributes<"h2">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<DrawerPrimitive.Title class={drawerTitle({ class: className })} {...rest} data-slot="drawer-title">
+  <slot />
+</DrawerPrimitive.Title>

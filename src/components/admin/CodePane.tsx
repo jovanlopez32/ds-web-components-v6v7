@@ -5,6 +5,7 @@ import { html } from '@codemirror/lang-html';
 import { less } from '@codemirror/lang-less';
 import { javascript } from '@codemirror/lang-javascript';
 import { formatCode, type CodeLanguage } from '../../lib/format';
+import { button } from '@/components/starwind/button/variants';
 
 interface Props {
 	language: CodeLanguage;
@@ -54,7 +55,12 @@ export default function CodePane({ language, value, onChange }: Props) {
 	return (
 		<div className="code-pane">
 			<div className="code-pane-toolbar">
-				<button type="button" onClick={handleFormat} disabled={isFormatting || !value.trim()}>
+				<button
+					type="button"
+					className={button({ variant: 'outline', size: 'sm' })}
+					onClick={handleFormat}
+					disabled={isFormatting || !value.trim()}
+				>
 					{isFormatting ? 'Formateando…' : 'Formatear'}
 				</button>
 			</div>

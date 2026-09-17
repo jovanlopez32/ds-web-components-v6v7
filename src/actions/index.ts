@@ -146,6 +146,22 @@ export const server = {
 				return { id };
 			},
 		}),
+
+		// Called after a drag-and-drop reorder in the page detail view. ids is
+		// the component list's new top-to-bottom order; position is just its
+		// index, so the list can be read back with `.order('position')`.
+		reorder: defineAction({
+			input: z.object({ ids: z.array(z.uuid()).min(1) }),
+			handler: async ({ ids }, context) => {
+				const db = dbFor(context);
+				const results = await Promise.all(
+					ids.map((id, position) => db.from('components').update({ position }).eq('id', id)),
+				);
+
+				fail(results.find((result) => result.error)?.error ?? null);
+				return { ids };
+			},
+		}),
 	},
 
 	pages: {
@@ -200,6 +216,22 @@ export const server = {
 
 				fail(error);
 				return { id };
+			},
+		}),
+
+		// Shared by the top-level page list and every subpage group: ids is one
+		// sibling group's new order (they all share the same parent_id), and
+		// position only needs to be consistent within that group.
+		reorder: defineAction({
+			input: z.object({ ids: z.array(z.uuid()).min(1) }),
+			handler: async ({ ids }, context) => {
+				const db = dbFor(context);
+				const results = await Promise.all(
+					ids.map((id, position) => db.from('pages').update({ position }).eq('id', id)),
+				);
+
+				fail(results.find((result) => result.error)?.error ?? null);
+				return { ids };
 			},
 		}),
 	},

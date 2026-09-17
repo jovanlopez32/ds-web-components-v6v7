@@ -15,11 +15,22 @@
  * separate sequential column precisely so this tag stays writable by hand; the
  * uuid primary key would not be.
  *
- * Everything here runs on the server. The source is highlighted by Astro's
- * built-in <Code /> (Shiki), so the code listing ships zero client JavaScript;
- * the only client-side thing on the page is the preview iframe itself.
+ * Everything here still runs on the server — the source listings are
+ * highlighted by Astro's built-in <Code /> (Shiki) and shipped as plain,
+ * pre-rendered markup. The only client script is the one that wires up the
+ * resize rail and the source drawer, and it is shared by every instance on
+ * the page (Astro dedupes identical <script> blocks).
  */
 import { Code } from 'astro:components';
+import IconDeviceDesktop from '@tabler/icons/outline/device-desktop.svg';
+import IconDeviceTablet from '@tabler/icons/outline/device-tablet.svg';
+import IconDeviceMobile from '@tabler/icons/outline/device-mobile.svg';
+import IconGripVertical from '@tabler/icons/outline/grip-vertical.svg';
+import IconCopy from '@tabler/icons/outline/copy.svg';
+import IconCheck from '@tabler/icons/outline/check.svg';
+import IconX from '@tabler/icons/outline/x.svg';
+import Drawer from './starwind/drawer';
+import Skeleton from './starwind/skeleton';
 import { supabase } from '../lib/supabase';
 import { loadPreviewSettingsCached, loadGlobalVariables } from '../lib/settings';
 import { buildPreviewDocument, PREVIEW_SANDBOX } from '../lib/preview';
@@ -29,7 +40,7 @@ import { mergeVariables, resolveAsp } from '../lib/asp';
 interface Props {
 	/** The component's `ref` number. Accepts a string so id="1" reads naturally. */
 	id: string | number;
-	/** Set false to show only the live example, without the source listing. */
+	/** Set false to show only the live example, without the source drawer. */
 	showCode?: boolean;
 	/** Height of the preview frame. Components vary wildly, so it is a prop. */
 	height?: string;
@@ -73,125 +84,634 @@ const srcDoc =
 			)
 		: '';
 
-/** Only the languages this component actually uses get a listing. */
+/** Only the languages this component actually uses get a button + panel. */
 const listings = component
 	? (
 			[
-				{ label: 'ASP', lang: 'html' as const, code: component.asp_code },
-				{ label: 'LESS', lang: 'less' as const, code: component.less_code },
-				{ label: 'Mixins', lang: 'less' as const, code: component.mixins_code },
-				{ label: 'JS', lang: 'js' as const, code: component.js_code },
+				{ lang: 'asp' as const, label: 'ASP', shiki: 'html' as const, code: component.asp_code },
+				{ lang: 'less' as const, label: 'LESS', shiki: 'less' as const, code: component.less_code },
+				{ lang: 'mixins' as const, label: 'Mixins', shiki: 'less' as const, code: component.mixins_code },
+				{ lang: 'js' as const, label: 'JS', shiki: 'js' as const, code: component.js_code },
 			] as const
 		).filter((listing) => listing.code && listing.code.trim())
 	: [];
+
+const showDrawer = showCode && listings.length > 0;
+
+// DOM-unique per render, since a page can embed several components.
+const uid = `cc-${component?.ref ?? 'missing'}-${Math.random().toString(36).slice(2, 8)}`;
+const frameId = `${uid}-frame`;
+
+/** Bootstrap's own breakpoints — the resize presets snap to these exactly. */
+const PRESETS = [
+	{ label: 'Mobile', width: 576, Icon: IconDeviceMobile },
+	{ label: 'Tablet', width: 768, Icon: IconDeviceTablet },
+	{ label: 'Desktop', width: 1200, Icon: IconDeviceDesktop },
+];
 ---
 
 {
 	!component ? (
-		<p class="code-component-missing">
+		<p class="bg-error/10 px-4 py-3 text-sm text-error">
 			No existe ningún componente con <code>id="{id}"</code>. El número es el campo
 			<strong> Referencia</strong> que muestra el editor.
 		</p>
 	) : (
-		<section class="code-component">
-			<header>
-				<h2>{component.title}</h2>
-				<p class="code-component-meta">
-					Referencia <code>{component.ref}</code>
-					{component.created_by_email && <> · por {component.created_by_email}</>}
-					{' · actualizado '}
+		<section class="my-8 bg-muted/40 p-4 sm:p-5" data-cc>
+			<header class="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+				<h2 class="text-lg font-semibold text-foreground">{component.title}</h2>
+				<p class="text-xs text-muted-foreground">
+					Ref <code class="bg-muted px-1.5 py-0.5">{component.ref}</code>
+					{component.created_by_email && <> · {component.created_by_email}</>}
+					{' · '}
 					{new Date(component.updated_at).toLocaleDateString('es-MX', { dateStyle: 'medium' })}
 				</p>
 			</header>
 
 			{compiled?.error && (
-				<p class="code-component-error">
+				<p class="mb-4 bg-error/10 px-4 py-3 text-sm text-error" role="alert">
 					El LESS de este componente no compila: {compiled.error.message}
 				</p>
 			)}
 
-			<!--
-				Same sandbox as the editor's preview: `allow-scripts` without
-				`allow-same-origin`, so the component's JS runs but cannot reach
-				this page's DOM or cookies.
-			-->
-			<iframe
-				title={`Ejemplo de ${component.title}`}
-				class="code-component-frame"
-				style={`height: ${height}`}
-				sandbox={PREVIEW_SANDBOX}
-				srcdoc={srcDoc}
-			/>
+			<div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+				<div class="flex flex-wrap items-center gap-3">
+					<span
+						class="inline-flex items-center gap-1.5 bg-muted px-2.5 py-1 text-xs font-medium tabular-nums text-muted-foreground"
+						data-cc-readout
+					>
+						100% · xxl
+					</span>
 
-			{
-				showCode &&
-					listings.map((listing) => (
-						<details class="code-component-source">
-							<summary>{listing.label}</summary>
-							<Code code={listing.code!} lang={listing.lang} theme="github-dark" />
-						</details>
-					))
-			}
+					<div class="inline-flex items-center gap-1 bg-muted p-1">
+						{PRESETS.map(({ label, width, Icon }) => (
+							<button
+								type="button"
+								class="appearance-none p-1.5 text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary data-[active=true]:bg-foreground data-[active=true]:text-background"
+								data-cc-preset={width}
+								aria-label={`Vista ${label} (${width}px)`}
+								title={`${label} · ${width}px`}
+							>
+								<Icon class="size-4" aria-hidden="true" />
+							</button>
+						))}
+					</div>
+				</div>
+
+				{showDrawer && (
+					<div class="inline-flex items-center gap-1 bg-muted p-1" data-cc-langs>
+						{listings.map((listing) => (
+							<button
+								type="button"
+								class="appearance-none px-2.5 py-1 text-xs font-medium text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary data-[active=true]:bg-foreground data-[active=true]:text-background"
+								data-cc-lang-btn
+								data-lang={listing.lang}
+							>
+								{listing.label}
+							</button>
+						))}
+					</div>
+				)}
+			</div>
+
+			<div class="flex items-stretch justify-center gap-2" data-cc-stage>
+				<div
+					class="relative overflow-hidden bg-background"
+					id={frameId}
+					style={`width: 100%; min-width: 320px; max-width: calc(100% - 2rem); height: ${height};`}
+					data-cc-frame
+				>
+					<!--
+						Same sandbox as the editor's preview: `allow-scripts` without
+						`allow-same-origin`, so the component's JS runs but cannot reach
+						this page's DOM or cookies.
+					-->
+					<!--
+						The skeleton below is retired by CSS the moment this frame reports
+						`load`. That is an inline attribute rather than a listener added by
+						the script at the bottom because that script is a module, and so
+						deferred: a preview with no remote assets to fetch can finish loading
+						before it ever runs. An attribute is bound while the parser is still
+						here, so the event can never be missed.
+					-->
+					<iframe
+						title={`Ejemplo de ${component.title}`}
+						class="block w-full"
+						style={`height: ${height}`}
+						sandbox={PREVIEW_SANDBOX}
+						srcdoc={srcDoc}
+						data-cc-iframe
+						onload="this.setAttribute('data-loaded', '')"
+					/>
+
+					<!--
+						Under the drawer's z-index (z-30 vs z-50) so the source can still be
+						opened while the example loads, and over the frame's own background
+						so the iframe's blank white body never shows through. The shapes are
+						deliberately generic: a stored component can be anything from a single
+						button to a full carousel, so there is nothing worth guessing at.
+					-->
+					<div
+						class="pointer-events-none absolute inset-0 z-30 flex flex-col gap-4 bg-background p-6"
+						data-cc-skeleton
+						aria-hidden="true"
+					>
+						<Skeleton class="h-7 w-2/5 rounded-none" />
+						<div class="flex flex-col gap-2">
+							<Skeleton class="h-3.5 w-full rounded-none" />
+							<Skeleton class="h-3.5 w-11/12 rounded-none" />
+							<Skeleton class="h-3.5 w-3/4 rounded-none" />
+						</div>
+						<Skeleton class="min-h-0 flex-1 rounded-none" />
+						<div class="flex gap-2">
+							<Skeleton class="h-9 w-28 rounded-none" />
+							<Skeleton class="h-9 w-20 rounded-none" />
+						</div>
+					</div>
+
+					{showDrawer && (
+						<Drawer.Root data-cc-drawer closeOnOutsideInteract={false} closeOnEscape={false} modal={false}>
+							<!--
+								Fills the whole frame (`max-w-none` overrides the primitive's
+								420px side-panel default): the language tabs live in the
+								toolbar above now, not floating on the preview, so there is no
+								reason left to keep a sliver of the live preview visible
+								behind the code. It is either the preview or the source.
+							-->
+							<Drawer.Content container={`#${frameId}`} side="right" class="max-w-none">
+								<div class="flex items-center justify-between gap-2 px-4 py-3">
+									<Drawer.Title data-cc-sheet-title class="text-sm font-semibold">
+										{listings[0].label}
+									</Drawer.Title>
+									<div class="flex items-center gap-1">
+										<button
+											type="button"
+											class="appearance-none inline-flex items-center gap-1.5 px-2 py-1.5 text-background/70 outline-none transition-colors hover:bg-background/15 hover:text-background focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-background"
+											data-cc-copy
+											title="Copiar código"
+											aria-label="Copiar código"
+										>
+											<IconCopy class="size-3.5" data-cc-copy-icon aria-hidden="true" />
+											<IconCheck class="hidden size-3.5" data-cc-copy-check aria-hidden="true" />
+										</button>
+										<button
+											type="button"
+											class="appearance-none inline-flex size-7 shrink-0 items-center justify-center text-background/70 outline-none transition-colors hover:bg-background/15 hover:text-background focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-background"
+											data-cc-close
+											title="Cerrar"
+											aria-label="Cerrar vista de código"
+										>
+											<IconX class="size-4" aria-hidden="true" />
+										</button>
+									</div>
+								</div>
+								<div class="min-h-0 flex-1 overflow-auto">
+									{listings.map((listing, index) => (
+										<div data-cc-panel data-lang={listing.lang} data-code={listing.code} hidden={index !== 0}>
+											<Code code={listing.code!} lang={listing.shiki} theme="github-dark" />
+										</div>
+									))}
+								</div>
+							</Drawer.Content>
+						</Drawer.Root>
+					)}
+				</div>
+
+				<div
+					class="flex w-6 shrink-0 cursor-col-resize items-center justify-center bg-muted text-muted-foreground transition-colors hover:bg-primary/15 hover:text-primary active:bg-primary/20"
+					data-cc-handle
+					title="Arrastra para cambiar el ancho de la vista previa"
+					aria-label="Redimensionar la vista previa"
+					role="separator"
+					aria-orientation="vertical"
+				>
+					<IconGripVertical class="size-4" aria-hidden="true" />
+				</div>
+			</div>
 		</section>
 	)
 }
 
 <style>
-	.code-component {
-		margin: 2rem 0;
-	}
-	.code-component header {
-		margin-bottom: 0.75rem;
-	}
-	.code-component h2 {
-		margin: 0;
-		font-size: 1.25rem;
-		font-weight: 700;
-	}
-	.code-component-meta {
-		margin: 0.25rem 0 0;
-		color: #6b7280;
-		font-size: 0.8125rem;
-	}
-	.code-component-meta code,
-	.code-component-missing code {
-		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-		background: #f3f4f6;
-		border-radius: 3px;
-		padding: 0.05rem 0.3rem;
-	}
-	.code-component-frame {
-		width: 100%;
-		border: 1px solid #e5e7eb;
-		border-radius: 6px;
-		background: white;
-	}
-	.code-component-missing,
-	.code-component-error {
-		padding: 0.75rem 1rem;
-		border-radius: 6px;
-		background: #fef2f2;
-		border: 1px solid #fecaca;
-		color: #b91c1c;
-		font-size: 0.875rem;
-	}
-	.code-component-source {
-		margin-top: 0.6rem;
-		border: 1px solid #e5e7eb;
-		border-radius: 6px;
-		overflow: hidden;
-	}
-	.code-component-source summary {
-		padding: 0.5rem 0.85rem;
-		background: #f9fafb;
-		cursor: pointer;
-		font-size: 0.8125rem;
-		font-weight: 600;
-	}
-	.code-component-source :global(pre) {
+	[data-cc-panel] :global(pre) {
 		margin: 0;
 		padding: 1rem;
-		overflow-x: auto;
 		font-size: 0.8125rem;
+		background: transparent !important;
+	}
+
+	/*
+	 * A closed <dialog> is display:none by the UA stylesheet, but the popup
+	 * carries its own `flex`, which outranks it — so the source panel is on
+	 * screen from first paint until the starwind runtime loads and hides it.
+	 * On a slow connection that is a full code listing sitting over the
+	 * example, and over the skeleton below. Keep it out until the script at
+	 * the bottom of this file has run and claimed the component.
+	 */
+	[data-cc]:not([data-cc-ready]) :global([data-sw-drawer-popup]) {
+		display: none;
+	}
+
+	/*
+	 * The example loads its own remote assets — icon fonts, jQuery — from
+	 * the platform's CDN, so there is a real gap between this page painting
+	 * and the component being visible. Driven by an attribute on the iframe
+	 * rather than from the script below so the handoff survives the script
+	 * not having run yet.
+	 */
+	[data-cc-skeleton] {
+		transition: opacity 350ms ease;
+	}
+
+	[data-cc-iframe][data-loaded] ~ [data-cc-skeleton] {
+		opacity: 0;
+		/* Held back until the fade ends, so `animate-pulse` stops repainting
+		   once the placeholder is gone without popping it out mid-transition. */
+		visibility: hidden;
+		transition:
+			opacity 350ms ease,
+			visibility 0s linear 350ms;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		/* Both selectors, and in this order: the rule above is more specific
+		   than a bare [data-cc-skeleton], and a media query does not outrank
+		   specificity. */
+		[data-cc-skeleton],
+		[data-cc-iframe][data-loaded] ~ [data-cc-skeleton] {
+			transition: none;
+		}
+
+		[data-cc-skeleton] :global([data-sw-skeleton]) {
+			animation: none;
+		}
 	}
 </style>
+
+<script>
+	import { createDrawer } from '@starwind-ui/runtime/drawer';
+	import { gsap } from 'gsap';
+
+	const MIN_WIDTH = 320;
+	const COPY_FEEDBACK_MS = 1500;
+	const SKELETON_MAX_WAIT_MS = 8000;
+
+	// Open and close are deliberate mirrors — the same curve read backwards —
+	// so the sheet leaves the way it arrived. `power3` also distributes the
+	// travel far more evenly than `expo`, which covers roughly three quarters
+	// of the distance in the first fifth of the tween and so reads as a jump
+	// followed by a crawl rather than as one movement.
+	const OPEN_DURATION = 0.55;
+	const OPEN_EASE = 'power3.out';
+	const CLOSE_DURATION = 0.45;
+	const CLOSE_EASE = 'power3.in';
+
+	// Width is a layout property: every frame re-lays out the preview iframe's
+	// entire document, so the resize gets a longer, gentler curve than the
+	// sheet — it has more work to do per frame and less distance to hide it in.
+	const RESIZE_DURATION = 0.7;
+	const RESIZE_EASE = 'power3.inOut';
+
+	const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+	/**
+	 * Runs `callback` once the element is actually rendered, plus one more frame.
+	 *
+	 * `drawer.open()` normally un-hides the <dialog> synchronously, but the
+	 * portal it lives in can defer the reveal by a frame or two, and the first
+	 * reveal is also the first time the browser lays out and paints the
+	 * syntax-highlighted source — an expensive frame. GSAP's clock is wall
+	 * time, so starting the slide before that frame lands means the first
+	 * rendered frame is already a third of the way through the tween, which is
+	 * exactly what makes the entrance look clipped. Waiting costs a couple of
+	 * frames with the sheet parked off-canvas (invisible) and buys the tween a
+	 * full set of frames on a warm layer.
+	 */
+	function whenRendered(element: HTMLElement, callback: () => void, tries = 12) {
+		const rendered = element.isConnected && !element.hidden && element.getClientRects().length > 0;
+		if (rendered || tries <= 0) {
+			requestAnimationFrame(callback);
+			return;
+		}
+		requestAnimationFrame(() => whenRendered(element, callback, tries - 1));
+	}
+
+	function bucketFor(width: number): string {
+		if (width < 576) return 'xs';
+		if (width < 768) return 'sm';
+		if (width < 992) return 'md';
+		if (width < 1200) return 'lg';
+		if (width < 1400) return 'xl';
+		return 'xxl';
+	}
+
+	function setup(root: HTMLElement) {
+		root.setAttribute('data-cc-ready', '');
+
+		const frame = root.querySelector<HTMLElement>('[data-cc-frame]');
+		const handle = root.querySelector<HTMLElement>('[data-cc-handle]');
+		const readout = root.querySelector<HTMLElement>('[data-cc-readout]');
+		const presetButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-cc-preset]'));
+
+		// Which preset the last click asked for, or null once the width stopped
+		// being a preset's doing (a drag). Tracked rather than inferred from the
+		// measured width because `max-width: calc(100% - 2rem)` can clamp the
+		// result — on a narrow viewport the Desktop preset never reaches 1200px,
+		// and the button it came from should still read as the active one.
+		let presetTarget: number | null = null;
+
+		function clearPresetActive() {
+			presetButtons.forEach((button) => button.removeAttribute('data-active'));
+		}
+
+		function syncFromWidth(width: number) {
+			if (readout) readout.textContent = `${Math.round(width)}px · ${bucketFor(width)}`;
+			clearPresetActive();
+			const active = presetTarget ?? Math.round(width);
+			for (const button of presetButtons) {
+				if (active === Number(button.dataset.ccPreset)) {
+					button.setAttribute('data-active', 'true');
+					break;
+				}
+			}
+		}
+
+		/** The widest the frame can actually render, per its own `max-width`. */
+		function maxWidthOf(element: HTMLElement) {
+			const max = Number.parseFloat(getComputedStyle(element).maxWidth);
+			return Number.isFinite(max) ? max : Number.POSITIVE_INFINITY;
+		}
+
+		// Clamped before the tween starts, not left to CSS: an unclamped target
+		// would keep the tween running after the visible width had already
+		// stopped moving, so the resize would feel like it ended early.
+		function resizeTo(element: HTMLElement, width: number) {
+			const target = Math.min(Math.max(width, MIN_WIDTH), maxWidthOf(element));
+			if (reduceMotion()) {
+				gsap.set(element, { width: target });
+				return;
+			}
+			gsap.to(element, {
+				width: target,
+				duration: RESIZE_DURATION,
+				ease: RESIZE_EASE,
+				overwrite: true,
+			});
+		}
+
+		if (frame) {
+			new ResizeObserver((entries) => syncFromWidth(entries[0].contentRect.width)).observe(frame);
+		}
+
+		presetButtons.forEach((button) => {
+			button.addEventListener('click', () => {
+				if (!frame) return;
+				presetTarget = Number(button.dataset.ccPreset);
+				// Light the button now instead of waiting for the tween to arrive.
+				syncFromWidth(frame.getBoundingClientRect().width);
+				resizeTo(frame, presetTarget);
+			});
+		});
+
+		if (handle && frame) {
+			let dragging = false;
+			let startX = 0;
+			let startWidth = 0;
+			let pendingWidth: number | null = null;
+			let pendingFrame = 0;
+
+			function flushDragWidth() {
+				pendingFrame = 0;
+				if (pendingWidth === null || !frame) return;
+				frame.style.width = `${pendingWidth}px`;
+				pendingWidth = null;
+			}
+
+			handle.addEventListener('pointerdown', (event) => {
+				dragging = true;
+				startX = event.clientX;
+				startWidth = frame.getBoundingClientRect().width;
+				// The hand wins over any preset still animating, and the button it
+				// came from stops claiming to describe the current width.
+				gsap.killTweensOf(frame);
+				presetTarget = null;
+				handle.setPointerCapture(event.pointerId);
+			});
+
+			handle.addEventListener('pointermove', (event) => {
+				if (!dragging) return;
+				// `max-width: calc(100% - 2rem)` on the frame leaves room for this
+				// rail and clamps the visual result, so the only floor that matters
+				// here is the minimum width we're willing to render at.
+				pendingWidth = Math.max(MIN_WIDTH, startWidth + (event.clientX - startX));
+				// Pointer events can fire several times per frame and each width
+				// write re-lays out the preview iframe's document, so coalesce to
+				// one write per frame and let the newest position win.
+				if (!pendingFrame) pendingFrame = requestAnimationFrame(flushDragWidth);
+			});
+
+			const stopDrag = (event: PointerEvent) => {
+				if (!dragging) return;
+				dragging = false;
+				if (pendingFrame) {
+					cancelAnimationFrame(pendingFrame);
+					flushDragWidth();
+				}
+				if (handle.hasPointerCapture(event.pointerId)) handle.releasePointerCapture(event.pointerId);
+			};
+			handle.addEventListener('pointerup', stopDrag);
+			handle.addEventListener('pointercancel', stopDrag);
+		}
+
+		// The skeleton over the example retires itself in CSS once the frame
+		// fires `load`; this is only the failsafe. A single stalled asset in the
+		// preview document would otherwise hold that event back indefinitely,
+		// leaving a placeholder on top of a component that rendered seconds ago.
+		// An unstyled example beats a skeleton that never leaves.
+		const iframe = root.querySelector<HTMLIFrameElement>('[data-cc-iframe]');
+		if (iframe && !iframe.hasAttribute('data-loaded')) {
+			const failsafe = setTimeout(
+				() => iframe.setAttribute('data-loaded', ''),
+				SKELETON_MAX_WAIT_MS,
+			);
+			iframe.addEventListener('load', () => clearTimeout(failsafe), { once: true });
+		}
+
+		const drawerRoot = root.querySelector<HTMLElement>('[data-cc-drawer]');
+		const popup = root.querySelector<HTMLElement>('[data-sw-drawer-popup]');
+		const closeButton = root.querySelector<HTMLButtonElement>('[data-cc-close]');
+		const langButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-cc-lang-btn]'));
+		const panels = Array.from(root.querySelectorAll<HTMLElement>('[data-cc-panel]'));
+		const sheetTitle = root.querySelector<HTMLElement>('[data-cc-sheet-title]');
+		const copyButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-cc-copy]'));
+		if (!drawerRoot || langButtons.length === 0) return;
+
+		const drawer = createDrawer(drawerRoot);
+		let activeLang = panels[0]?.dataset.lang ?? null;
+		let closing = false;
+
+		// Tabs only read as "active" while the sheet showing them is actually
+		// open — a tab is a trigger here, not a permanent selection, so it must
+		// not look pressed while there is nothing visible behind it.
+		function syncActiveTabs() {
+			const open = drawer.getOpen();
+			langButtons.forEach((button) => {
+				button.setAttribute('data-active', open && button.dataset.lang === activeLang ? 'true' : 'false');
+			});
+		}
+
+		function showPanel(lang: string) {
+			activeLang = lang;
+			panels.forEach((panel) => {
+				panel.hidden = panel.dataset.lang !== lang;
+			});
+			syncActiveTabs();
+			const activeButton = langButtons.find((button) => button.dataset.lang === lang);
+			if (sheetTitle && activeButton) sheetTitle.textContent = activeButton.textContent?.trim() ?? '';
+		}
+
+		if (activeLang) showPanel(activeLang);
+
+		// The sheet slides in/out on its own transform, independently of the
+		// runtime's open/closed bookkeeping: `drawer.open()` reveals the
+		// <dialog> (already positioned off-canvas, set synchronously first so
+		// there's nothing to flash), then GSAP animates it to rest. Closing
+		// runs the mirrored slide-out first and only calls `drawer.close()`
+		// (which hides the <dialog>) once that finishes, so the exit is never
+		// cut short by the instant native hide.
+		let closeTween: gsap.core.Tween | null = null;
+
+		function slideIn() {
+			if (!popup || !drawer.getOpen() || closing) return;
+			gsap.to(popup, {
+				xPercent: 0,
+				duration: OPEN_DURATION,
+				ease: OPEN_EASE,
+				overwrite: 'auto',
+				force3D: true,
+				onComplete: () => gsap.set(popup, { willChange: 'auto' }),
+			});
+		}
+
+		function animatedOpen() {
+			if (!popup) return;
+
+			// Interrupting a close: the sheet is still on screen, so pick the
+			// slide back up from wherever it got to rather than snapping it
+			// off-canvas and starting over.
+			if (closing) {
+				closeTween?.kill();
+				closeTween = null;
+				closing = false;
+				slideIn();
+				return;
+			}
+			if (drawer.getOpen()) return;
+
+			if (reduceMotion()) {
+				gsap.set(popup, { xPercent: 0 });
+				drawer.open();
+				return;
+			}
+
+			// `will-change` before the reveal, so the compositor has the layer
+			// ready by the time the tween's first frame runs; dropped again on
+			// completion rather than left on, since a permanent layer costs
+			// memory and softens the code's text rendering.
+			gsap.set(popup, { xPercent: 100, willChange: 'transform', force3D: true });
+
+			// `drawer.open()` focuses the first control inside the sheet, and at
+			// that moment the sheet is still parked off-canvas — so the browser
+			// scrolls to "reveal" it, shoving the frame's content and the page
+			// sideways. Put both back before anything is painted.
+			const pageX = window.scrollX;
+			const pageY = window.scrollY;
+			drawer.open();
+			frame?.scrollTo(0, 0);
+			window.scrollTo(pageX, pageY);
+
+			whenRendered(popup, slideIn);
+		}
+
+		function animatedClose() {
+			if (!popup || !drawer.getOpen() || closing) return;
+			if (reduceMotion()) {
+				drawer.close();
+				return;
+			}
+			closing = true;
+			gsap.set(popup, { willChange: 'transform' });
+			closeTween = gsap.to(popup, {
+				xPercent: 100,
+				duration: CLOSE_DURATION,
+				ease: CLOSE_EASE,
+				overwrite: 'auto',
+				force3D: true,
+				onComplete: () => {
+					closing = false;
+					closeTween = null;
+					gsap.set(popup, { willChange: 'auto' });
+					drawer.close();
+				},
+			});
+		}
+
+		langButtons.forEach((button) => {
+			button.addEventListener('click', () => {
+				const lang = button.dataset.lang;
+				if (!lang) return;
+				// Mid-close the sheet is still `getOpen()`, but it is on its way
+				// out — so a click there means "come back", not "close again".
+				const visible = drawer.getOpen() && !closing;
+				if (visible && activeLang === lang) {
+					animatedClose();
+					return;
+				}
+				showPanel(lang);
+				animatedOpen();
+			});
+		});
+
+		closeButton?.addEventListener('click', animatedClose);
+
+		document.addEventListener('keydown', (event) => {
+			if (event.key !== 'Escape' || !drawer.getOpen()) return;
+			event.preventDefault();
+			animatedClose();
+		});
+
+		drawer.subscribe('openChange', syncActiveTabs);
+
+		copyButtons.forEach((button) => {
+			const icon = button.querySelector<HTMLElement>('[data-cc-copy-icon]');
+			const check = button.querySelector<HTMLElement>('[data-cc-copy-check]');
+			let resetTimer: ReturnType<typeof setTimeout> | null = null;
+
+			button.addEventListener('click', async () => {
+				const panel = panels.find((p) => p.dataset.lang === activeLang);
+				const code = panel?.dataset.code;
+				if (!code) return;
+
+				await navigator.clipboard.writeText(code);
+
+				icon?.classList.add('hidden');
+				check?.classList.remove('hidden');
+				if (resetTimer) clearTimeout(resetTimer);
+				resetTimer = setTimeout(() => {
+					icon?.classList.remove('hidden');
+					check?.classList.add('hidden');
+				}, COPY_FEEDBACK_MS);
+			});
+		});
+	}
+
+	function initAll() {
+		document
+			.querySelectorAll<HTMLElement>('[data-cc]:not([data-cc-ready])')
+			.forEach(setup);
+	}
+
+	initAll();
+	document.addEventListener('astro:after-swap', initAll);
+	document.addEventListener('starwind:init', initAll);
+</script>

@@ -2,9 +2,24 @@
 export const prerender = false;
 
 import { actions, isInputError } from 'astro:actions';
-import Layout from '../../../layouts/Layout.astro';
+import Layout from '../../../layouts/AdminLayout.astro';
 import AdminNav from '../../../components/AdminNav.astro';
 import { createUserClient } from '../../../lib/supabase';
+import { Button } from '@/components/starwind/button';
+import { Input } from '@/components/starwind/input';
+import { Label } from '@/components/starwind/label';
+import { NativeSelect } from '@/components/starwind/native-select';
+import { Textarea } from '@/components/starwind/textarea';
+import {
+	AlertDialog,
+	AlertDialogTrigger,
+	AlertDialogContent,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogFooter,
+	AlertDialogCancel,
+	AlertDialogAction,
+} from '@/components/starwind/alert-dialog';
 
 const accessToken = Astro.cookies.get('sb-access-token')?.value;
 
@@ -17,7 +32,7 @@ const db = createUserClient(accessToken);
 const { data: pages, error } = await db
 	.from('pages')
 	.select('id, parent_id, title, slug, admin_slug, description')
-	.order('title');
+	.order('position');
 
 const createResult = Astro.getActionResult(actions.pages.create);
 const inputErrors = isInputError(createResult?.error) ? createResult.error.fields : {};
@@ -44,45 +59,60 @@ const childrenOf = (parentId: string) => (pages ?? []).filter((page) => page.par
 			<p class="error">{Object.values(inputErrors).flat().join(' ')}</p>
 		)}
 
-		<button type="button" id="open-create-page">Nueva page</button>
+		<AlertDialog>
+			<AlertDialogTrigger asChild class="open-create-page">
+				<Button type="button">Nueva page</Button>
+			</AlertDialogTrigger>
 
-		<dialog id="create-page-dialog">
-			<form method="POST" action={actions.pages.create}>
-				<h2>Nueva page</h2>
+			<AlertDialogContent>
+				<form method="POST" action={actions.pages.create} class="create-page-form">
+					<AlertDialogHeader>
+						<AlertDialogTitle>Nueva page</AlertDialogTitle>
+					</AlertDialogHeader>
 
-				<label for="title">Título</label>
-				<input type="text" name="title" id="title" required />
+					<div class="create-page-fields">
+						<Label for="title">Título</Label>
+						<Input type="text" name="title" id="title" required />
 
-				<label for="slug">Slug público</label>
-				<input type="text" name="slug" id="slug" required pattern="[a-z0-9-]+" placeholder="mi-page" />
+						<Label for="slug">Slug público</Label>
+						<Input type="text" name="slug" id="slug" required pattern="[a-z0-9-]+" placeholder="mi-page" />
 
-				<label for="parentId">Page padre</label>
-				<!--
-					Only top-level pages are offered, which keeps the tree two
-					levels deep and makes a parent cycle impossible to create
-					through the UI.
-				-->
-				<select name="parentId" id="parentId">
-					<option value="">Ninguna (page principal)</option>
-					{topLevel.map((page) => <option value={page.id}>{page.title}</option>)}
-				</select>
+						<Label for="parentId">Page padre</Label>
+						<!--
+							Only top-level pages are offered, which keeps the tree two
+							levels deep and makes a parent cycle impossible to create
+							through the UI.
+						-->
+						<NativeSelect name="parentId" id="parentId">
+							<option value="">Ninguna (page principal)</option>
+							{topLevel.map((page) => <option value={page.id}>{page.title}</option>)}
+						</NativeSelect>
 
-				<label for="description">Descripción</label>
-				<textarea name="description" id="description" rows="3"></textarea>
+						<Label for="description">Descripción</Label>
+						<Textarea name="description" id="description" rows="3" />
+					</div>
 
-				<div class="actions">
-					<button type="button" id="cancel-create-page">Cancelar</button>
-					<button type="submit">Crear</button>
-				</div>
-			</form>
-		</dialog>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancelar</AlertDialogCancel>
+						<AlertDialogAction type="submit">Crear</AlertDialogAction>
+					</AlertDialogFooter>
+				</form>
+			</AlertDialogContent>
+		</AlertDialog>
 
 		{topLevel.length === 0 && <p class="empty">Todavía no hay pages.</p>}
 
 		<ul class="page-list">
 			{topLevel.map((page) => (
-				<li>
+				<li data-id={page.id}>
 					<div class="page-row">
+						<span class="drag-handle" title="Arrastrar para reordenar">
+							<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+								<circle cx="9" cy="6" r="1.5" /><circle cx="15" cy="6" r="1.5" />
+								<circle cx="9" cy="12" r="1.5" /><circle cx="15" cy="12" r="1.5" />
+								<circle cx="9" cy="18" r="1.5" /><circle cx="15" cy="18" r="1.5" />
+							</svg>
+						</span>
 						<div>
 							<strong>{page.title}</strong>
 							<a class="slug" href={`/${page.slug}`} target="_blank">/{page.slug}</a>
@@ -96,7 +126,7 @@ const childrenOf = (parentId: string) => (pages ?? []).filter((page) => page.par
 								onsubmit="return confirm('¿Eliminar esta page? También se borran sus subpáginas y componentes.')"
 							>
 								<input type="hidden" name="id" value={page.id} />
-								<button type="submit" class="danger">Eliminar</button>
+								<Button type="submit" variant="error" size="sm">Eliminar</Button>
 							</form>
 						</div>
 					</div>
@@ -104,7 +134,14 @@ const childrenOf = (parentId: string) => (pages ?? []).filter((page) => page.par
 					{childrenOf(page.id).length > 0 && (
 						<ul class="subpage-list">
 							{childrenOf(page.id).map((child) => (
-								<li class="page-row">
+								<li class="page-row" data-id={child.id}>
+									<span class="drag-handle" title="Arrastrar para reordenar">
+										<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+											<circle cx="9" cy="6" r="1.5" /><circle cx="15" cy="6" r="1.5" />
+											<circle cx="9" cy="12" r="1.5" /><circle cx="15" cy="12" r="1.5" />
+											<circle cx="9" cy="18" r="1.5" /><circle cx="15" cy="18" r="1.5" />
+										</svg>
+									</span>
 									<div>
 										<strong>{child.title}</strong>
 										<a class="slug" href={`/${child.slug}`} target="_blank">/{child.slug}</a>
@@ -118,7 +155,7 @@ const childrenOf = (parentId: string) => (pages ?? []).filter((page) => page.par
 											onsubmit="return confirm('¿Eliminar esta subpágina y sus componentes?')"
 										>
 											<input type="hidden" name="id" value={child.id} />
-											<button type="submit" class="danger">Eliminar</button>
+											<Button type="submit" variant="error" size="sm">Eliminar</Button>
 										</form>
 									</div>
 								</li>
@@ -132,9 +169,29 @@ const childrenOf = (parentId: string) => (pages ?? []).filter((page) => page.par
 </Layout>
 
 <script>
-	const dialog = document.getElementById('create-page-dialog') as HTMLDialogElement | null;
-	document.getElementById('open-create-page')?.addEventListener('click', () => dialog?.showModal());
-	document.getElementById('cancel-create-page')?.addEventListener('click', () => dialog?.close());
+	import { actions } from 'astro:actions';
+	import Sortable from 'sortablejs';
+
+	// One Sortable per sibling group: the top-level list and each subpage
+	// list are kept separate so a drag never crosses between levels.
+	function makeSortable(el: Element | null, reorder: typeof actions.pages.reorder) {
+		if (!el) return;
+		Sortable.create(el as HTMLElement, {
+			handle: '.drag-handle',
+			animation: 150,
+			onEnd: async () => {
+				const ids = Array.from(el.children).map((li) => (li as HTMLElement).dataset.id!);
+				const { error } = await reorder({ ids });
+				if (error) {
+					alert('No se pudo guardar el nuevo orden.');
+					location.reload();
+				}
+			},
+		});
+	}
+
+	makeSortable(document.querySelector('.page-list'), actions.pages.reorder);
+	document.querySelectorAll('.subpage-list').forEach((el) => makeSortable(el, actions.pages.reorder));
 
 	// Derive the slug from the title until the author edits the slug themselves.
 	const titleInput = document.getElementById('title') as HTMLInputElement | null;
@@ -179,63 +236,24 @@ const childrenOf = (parentId: string) => (pages ?? []).filter((page) => page.par
 	.empty {
 		color: #6b7280;
 	}
-	#open-create-page {
+	.open-create-page {
 		margin-bottom: 1.25rem;
 	}
-	button {
-		padding: 0.5rem 1rem;
-		border: 1px solid #111827;
-		border-radius: 4px;
-		background: #111827;
-		color: white;
-		font: inherit;
-		font-weight: 600;
-		cursor: pointer;
+	.create-page-form {
+		display: flex;
+		flex-direction: column;
+		gap: 1.25rem;
 	}
-	button.danger {
-		background: white;
-		border-color: #b91c1c;
-		color: #b91c1c;
-		font-size: 0.8125rem;
-		padding: 0.35rem 0.7rem;
-	}
-	dialog {
-		border: 1px solid #e5e7eb;
-		border-radius: 8px;
-		padding: 1.5rem;
-		min-width: 420px;
-	}
-	dialog h2 {
-		margin: 0 0 1rem;
-	}
-	dialog form {
+	.create-page-fields {
 		display: flex;
 		flex-direction: column;
 	}
-	dialog label {
-		font-weight: 600;
-		font-size: 0.875rem;
+	.create-page-fields :global([data-slot='label']) {
 		margin-top: 0.9rem;
 		margin-bottom: 0.25rem;
 	}
-	dialog input,
-	dialog select,
-	dialog textarea {
-		padding: 0.5rem;
-		border: 1px solid #d1d5db;
-		border-radius: 4px;
-		font: inherit;
-	}
-	dialog .actions {
-		display: flex;
-		justify-content: flex-end;
-		gap: 0.6rem;
-		margin-top: 1.5rem;
-	}
-	dialog .actions button[type='button'] {
-		background: white;
-		color: #111827;
-		border-color: #d1d5db;
+	.create-page-fields :global([data-slot='label']):first-child {
+		margin-top: 0;
 	}
 	.page-list,
 	.subpage-list {
@@ -251,16 +269,34 @@ const childrenOf = (parentId: string) => (pages ?? []).filter((page) => page.par
 	.page-row {
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
 		gap: 1rem;
 		padding: 0.7rem 1rem;
 		border: 1px solid #e5e7eb;
 		border-radius: 6px;
 	}
+	.page-row > div:not(.page-actions) {
+		flex: 1;
+	}
 	.page-row p {
 		margin: 0.25rem 0 0;
 		color: #6b7280;
 		font-size: 0.875rem;
+	}
+	.drag-handle {
+		display: flex;
+		flex-shrink: 0;
+		color: #9ca3af;
+		cursor: grab;
+		touch-action: none;
+	}
+	.drag-handle:active {
+		cursor: grabbing;
+	}
+	.sortable-ghost {
+		opacity: 0.4;
+	}
+	.sortable-drag {
+		background: #f9fafb;
 	}
 	.slug {
 		display: block;

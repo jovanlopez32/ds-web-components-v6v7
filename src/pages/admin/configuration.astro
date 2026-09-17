@@ -2,10 +2,13 @@
 export const prerender = false;
 
 import { actions } from 'astro:actions';
-import Layout from '../../layouts/Layout.astro';
+import Layout from '../../layouts/AdminLayout.astro';
 import AdminNav from '../../components/AdminNav.astro';
 import { createUserClient } from '../../lib/supabase';
 import { loadPreviewSettings } from '../../lib/settings';
+import { Button } from '@/components/starwind/button';
+import { Label } from '@/components/starwind/label';
+import { Textarea } from '@/components/starwind/textarea';
 
 const accessToken = Astro.cookies.get('sb-access-token')?.value;
 
@@ -38,28 +41,28 @@ const result = Astro.getActionResult(actions.settings.save);
 		{result && !result.error && <p class="ok">Configuración guardada.</p>}
 
 		<form method="POST" action={actions.settings.save}>
-			<label for="previewCssUrls">Hojas de estilo externas</label>
+			<Label for="previewCssUrls">Hojas de estilo externas</Label>
 			<p class="help">
 				Una URL por línea, inyectadas como <code>&lt;link&gt;</code> solo en la vista previa —
 				nunca en este admin. Aquí van las fuentes de iconos y cualquier CSS externo que la
 				plataforma cargue en su <code>&lt;head&gt;</code> (Font Awesome, iconmonstr). Las
 				<code>//</code> se fijan a <code>https:</code> automáticamente.
 			</p>
-			<textarea id="previewCssUrls" name="previewCssUrls" rows="4" spellcheck="false"
-				>{settings.previewCssUrls.join('\n')}</textarea
+			<Textarea id="previewCssUrls" name="previewCssUrls" rows="4" spellcheck="false"
+				>{settings.previewCssUrls.join('\n')}</Textarea
 			>
 
-			<label for="previewJsUrls">Scripts</label>
+			<Label for="previewJsUrls">Scripts</Label>
 			<p class="help">
 				Una URL por línea, cargados antes del JS del componente. Aquí va jQuery. El JS
 				vainilla no necesita nada extra: funciona igual con o sin jQuery cargado, así que no
 				hay que separarlos.
 			</p>
-			<textarea id="previewJsUrls" name="previewJsUrls" rows="3" spellcheck="false"
-				>{settings.previewJsUrls.join('\n')}</textarea
+			<Textarea id="previewJsUrls" name="previewJsUrls" rows="3" spellcheck="false"
+				>{settings.previewJsUrls.join('\n')}</Textarea
 			>
 
-			<label for="previewLessVariables">Variables del sitio (LESS)</label>
+			<Label for="previewLessVariables">Variables del sitio (LESS)</Label>
 			<p class="help">
 				Solo las variables que <strong>cambian de un sitio a otro</strong>:
 				<code>@black</code>, <code>@index-primary</code>, <code>@img-path</code>. Los mixins y
@@ -69,11 +72,11 @@ const result = Astro.getActionResult(actions.settings.save);
 				funcionan sin declarar nada. Si un componente usa una variable de tema que no está
 				aquí, la compilación falla y verás el error en el editor.
 			</p>
-			<textarea id="previewLessVariables" name="previewLessVariables" rows="10" spellcheck="false"
-				>{settings.previewLessVariables}</textarea
+			<Textarea id="previewLessVariables" name="previewLessVariables" rows="10" spellcheck="false"
+				>{settings.previewLessVariables}</Textarea
 			>
 
-			<button type="submit">Guardar configuración</button>
+			<Button type="submit" class="save-button">Guardar configuración</Button>
 		</form>
 	</main>
 </Layout>
@@ -117,8 +120,7 @@ const result = Astro.getActionResult(actions.settings.save);
 		flex-direction: column;
 		margin-top: 1.5rem;
 	}
-	label {
-		font-weight: 700;
+	form > :global([data-slot='label']) {
 		margin-top: 1.5rem;
 	}
 	.help {
@@ -132,24 +134,13 @@ const result = Astro.getActionResult(actions.settings.save);
 		padding: 0.05rem 0.3rem;
 		border-radius: 3px;
 	}
-	textarea {
-		padding: 0.6rem;
-		border: 1px solid #d1d5db;
-		border-radius: 4px;
+	:global(textarea[data-slot='textarea']) {
 		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 		font-size: 0.8125rem;
 		resize: vertical;
 	}
-	button {
+	.save-button {
 		align-self: flex-start;
 		margin-top: 1.75rem;
-		padding: 0.6rem 1.2rem;
-		border: none;
-		border-radius: 4px;
-		background: #111827;
-		color: white;
-		font: inherit;
-		font-weight: 600;
-		cursor: pointer;
 	}
 </style>
