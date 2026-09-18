@@ -2,7 +2,6 @@
 export const prerender = false;
 
 import Layout from '../../../../../layouts/AdminLayout.astro';
-import AdminNav from '../../../../../components/AdminNav.astro';
 import ComponentEditor from '../../../../../components/admin/ComponentEditor';
 import { createUserClient } from '../../../../../lib/supabase';
 import { loadPreviewSettingsCached, loadGlobalVariables } from '../../../../../lib/settings';
@@ -44,7 +43,6 @@ const [settings, globalVariables] = await Promise.all([loadPreviewSettingsCached
 
 <Layout title={`Editar ${component.title}`}>
 	<main>
-		<AdminNav current="pages" />
 		<!--
 			client:only is required, not a preference: CodeMirror needs a real
 			DOM and cannot be server-rendered.

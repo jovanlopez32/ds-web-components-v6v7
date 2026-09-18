@@ -3,7 +3,6 @@ export const prerender = false;
 
 import { actions } from 'astro:actions';
 import Layout from '../../layouts/AdminLayout.astro';
-import AdminNav from '../../components/AdminNav.astro';
 import { createUserClient } from '../../lib/supabase';
 import { Button } from '@/components/starwind/button';
 import { Input } from '@/components/starwind/input';
@@ -33,7 +32,6 @@ const saveResult = Astro.getActionResult(actions.variables.save);
 			<h1>Variables globales</h1>
 			<a href="/admin">&larr; Volver al dashboard</a>
 		</header>
-		<AdminNav current="variables" />
 
 		<p class="intro">
 			Sustituyen las expresiones ASP <code>&lt;%=NOMBRE%&gt;</code> en la vista previa, para
@@ -111,8 +109,10 @@ const saveResult = Astro.getActionResult(actions.variables.save);
 	}
 	header {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		justify-content: space-between;
+		gap: 0.5rem 1rem;
 	}
 	header a {
 		color: #6b7280;
@@ -146,7 +146,9 @@ const saveResult = Astro.getActionResult(actions.variables.save);
 	}
 	.new-variable {
 		display: grid;
-		grid-template-columns: 1fr 1fr auto;
+		/* One column on a phone: three side by side leaves each field about
+		   70px wide, which is narrower than the variable names that go in them. */
+		grid-template-columns: minmax(0, 1fr);
 		gap: 0.6rem;
 		align-items: end;
 		margin: 1.5rem 0;
@@ -171,17 +173,34 @@ const saveResult = Astro.getActionResult(actions.variables.save);
 		flex-direction: column;
 		gap: 0.5rem;
 	}
+	/* On a phone the row stacks name, value and Guardar, and keeps Eliminar in
+	   its own column bottom-aligned, so the two buttons still read as one row
+	   even though they belong to separate forms. */
 	.variable-list li {
-		display: flex;
-		align-items: center;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: end;
 		gap: 0.5rem;
 	}
 	.variable-list li > form:first-child {
 		display: grid;
-		grid-template-columns: 1fr 1fr auto;
+		grid-template-columns: minmax(0, 1fr);
 		gap: 0.5rem;
-		flex: 1;
 		min-width: 0;
+	}
+
+	@media (min-width: 40rem) {
+		.new-variable {
+			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+		}
+		.variable-list li {
+			display: flex;
+			align-items: center;
+		}
+		.variable-list li > form:first-child {
+			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+			flex: 1;
+		}
 	}
 	:global(input[data-slot='input']) {
 		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;

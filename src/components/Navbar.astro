@@ -26,9 +26,9 @@ const getChildren = (parentId: string) => {
 };
 ---
 
-<nav class="w-full max-w-5xl left-0 right-0 top-6 mx-auto h-14 fixed bg-gray-400/10 rounded-md bg-clip-padding backdrop-filter backdrop-blur-sm py-1.5 px-3 flex items-center">
+<nav class="w-[calc(100%-1.5rem)] max-w-5xl left-0 right-0 top-3 md:top-6 mx-auto h-14 fixed z-40 bg-gray-400/10 rounded-md bg-clip-padding backdrop-filter backdrop-blur-sm py-1.5 px-3 flex items-center justify-between">
 	<a href="/" class="text-xl font-bold tracking-tight text-foreground transition-colors duration-200 hover:text-primary">
-		<DSLogo class="size-7" />
+		<DSLogo class="size-7 text-[#160032] dark:text-white" />
 	</a>
 
 	<div class="hidden h-full items-center md:flex">
@@ -78,86 +78,475 @@ const getChildren = (parentId: string) => {
 		</NavigationMenu>
 	</div>
 
-	<ThemeToggle ariaLabel="Toggle theme" />
+	<div class="flex items-center gap-1">
+		<ThemeToggle class="border-0 shadow-none! bg-transparent!" ariaLabel="Toggle theme" />
+
+		<button
+			type="button"
+			data-menu-open
+			aria-controls="mobile-menu"
+			aria-expanded="false"
+			aria-label="Abrir navegación"
+			class="inline-flex items-center justify-center rounded-md p-2 text-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:hidden"
+		>
+			<svg class="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M4 17h16" />
+			</svg>
+		</button>
+	</div>
 
 </nav>
 
-<!-- <nav class="w-full border-b border-border bg-background font-sans">
-	<div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+<!--
+	Sibling of <nav> rather than a child: the nav's `backdrop-filter` makes it a
+	containing block for fixed-position descendants, so an overlay nested inside
+	would be clipped to the nav's 3.5rem bar instead of covering the viewport.
+-->
+<div
+	id="mobile-menu"
+	data-menu-root
+	class="invisible fixed inset-0 z-50 md:hidden"
+	inert
+>
+	<!--
+		Two layers, because one solid panel the same colour as the page it covers
+		animates invisibly: `bg-background` is the exact colour of `<body>`, so a
+		black rectangle rising over black moves without a single pixel changing.
+		The coloured sheet leads and makes the sweep legible; the neutral one
+		follows and settles into the menu's actual background.
+	-->
+	<div data-menu-sweep class="absolute inset-0 bg-primary"></div>
+	<div data-menu-bg class="absolute inset-0 bg-background"></div>
 
-		Logo
-		<a href="/" class="text-xl font-bold tracking-tight text-foreground transition-colors duration-200 hover:text-primary">
-			LeadVenture
-		</a>
-
-		Desktop Navigation
-		<div class="hidden h-full items-center md:flex">
-			<NavigationMenu aria-label="Navegación principal">
-				<NavigationMenuList>
-					{
-						topLevel.map((page) => {
-							const children = getChildren(page.id);
-
-							if (children.length > 0) {
-								return (
-									<NavigationMenuItem value={page.slug}>
-										<NavigationMenuTrigger>{page.title}</NavigationMenuTrigger>
-										<NavigationMenuContent>
-											<ul class="w-56">
-												<li>
-													<NavigationMenuLink
-														href={`/${page.slug}`}
-														class="border-b border-border font-semibold"
-													>
-														{page.title}
-													</NavigationMenuLink>
-												</li>
-												{children.map((child) => (
-													<li>
-														<NavigationMenuLink href={`/${child.slug}`}>
-															{child.title}
-														</NavigationMenuLink>
-													</li>
-												))}
-											</ul>
-										</NavigationMenuContent>
-									</NavigationMenuItem>
-								);
-							}
-
-							return (
-								<NavigationMenuItem value={page.slug}>
-									<NavigationMenuLink href={`/${page.slug}`} class={navigationMenuTriggerStyle()}>
-										{page.title}
-									</NavigationMenuLink>
-								</NavigationMenuItem>
-							);
-						})
-					}
-				</NavigationMenuList>
-			</NavigationMenu>
-		</div>
-
-		Mobile Button
+	<!--
+		Mirrors the nav's own box so the close icon lands where the hamburger was.
+		`z-10` is load-bearing: the link list below is `relative h-full` and comes
+		later in the DOM, so without it that full-height box paints over this one
+		and swallows every click aimed at the close button.
+	-->
+	<div class="absolute top-3 md:top-6 right-0 left-0 z-10 mx-auto flex h-14 w-[calc(100%-1.5rem)] max-w-5xl items-center justify-end px-3">
 		<button
 			type="button"
-			class="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:hidden"
-			aria-label="Open navigation"
+			data-menu-close
+			aria-label="Cerrar navegación"
+			class="inline-flex items-center justify-center rounded-md p-2 text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
 		>
-			<svg
-				class="h-6 w-6"
-				fill="none"
-				viewBox="0 0 24 24"
-				stroke="currentColor"
-				stroke-width="2"
-			>
-				<path
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					d="M4 6h16M4 12h16M4 18h16"
-				/>
+			<svg class="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18" />
 			</svg>
 		</button>
-
 	</div>
-</nav> -->
+
+	<nav aria-label="Navegación móvil" class="relative flex h-full flex-col overflow-y-auto px-6 py-24">
+		<ul class="my-auto flex flex-col gap-2">
+			{
+				topLevel.map((page) => {
+					const children = getChildren(page.id);
+
+					if (children.length > 0) {
+						return (
+							<li data-menu-group>
+								{/*
+									A button, not a link: the row's job is to reveal the branch.
+									The parent page keeps its own entry as the first item inside,
+									the same arrangement the desktop dropdown uses, so the page
+									stays reachable without the row having two conflicting jobs.
+								*/}
+								<button
+									type="button"
+									data-menu-toggle
+									aria-controls={`mobile-submenu-${page.slug}`}
+									aria-expanded="false"
+									class="flex w-full items-center justify-between gap-3 text-left"
+								>
+									{/*
+										Two elements per label on purpose: the outer one clips, the
+										inner one moves. The negative margin cancels the descender
+										padding in layout only — the clip box keeps it, so glyph
+										tails aren't cut.
+									*/}
+									<span class="block mb-[-0.15em] overflow-hidden">
+										<span data-menu-text class="block pb-[0.15em] text-3xl font-semibold tracking-tight text-foreground">
+											{page.title}
+										</span>
+									</span>
+									{/*
+										Wrapped so the two jobs don't collide: the wrapper fades in
+										with the entrance, the svg inside rotates when the branch
+										toggles. On one element the toggle's tween would have to kill
+										the entrance's, leaving a half-faded chevron.
+									*/}
+									<span data-menu-chevron-wrap class="block shrink-0">
+										<svg
+											data-menu-chevron
+											class="size-5 text-muted-foreground"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+											stroke-width="2"
+											aria-hidden="true"
+										>
+											<path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6" />
+										</svg>
+									</span>
+								</button>
+
+								{/*
+									Collapsed by height rather than `display`, so the panel has a
+									measurable box to tween between and the labels inside it have
+									something to be masked by on the way out.
+								*/}
+								<ul
+									id={`mobile-submenu-${page.slug}`}
+									data-menu-sub
+									class="h-0 overflow-hidden pl-4"
+								>
+									<li class="pt-3">
+										<a href={`/${page.slug}`} class="block mb-[-0.15em] overflow-hidden">
+											<span data-menu-subtext class="block pb-[0.15em] text-lg font-semibold text-foreground">
+												{page.title}
+											</span>
+										</a>
+									</li>
+									{children.map((child) => (
+										<li class="pt-2">
+											<a href={`/${child.slug}`} class="block mb-[-0.15em] overflow-hidden">
+												<span data-menu-subtext class="block pb-[0.15em] text-lg text-muted-foreground">
+													{child.title}
+												</span>
+											</a>
+										</li>
+									))}
+									<li class="h-3" aria-hidden="true" />
+								</ul>
+							</li>
+						);
+					}
+
+					return (
+						<li>
+							<a href={`/${page.slug}`} class="block mb-[-0.15em] overflow-hidden">
+								<span data-menu-text class="block pb-[0.15em] text-3xl font-semibold tracking-tight text-foreground">
+									{page.title}
+								</span>
+							</a>
+						</li>
+					);
+				})
+			}
+		</ul>
+	</nav>
+</div>
+
+<script>
+	import { gsap } from 'gsap';
+
+	// The panel leads, the words follow out of their masks, the close icon lands
+	// last — one gesture, read top to bottom. `power3.out` on the panel and the
+	// words so both decelerate into place; the icon gets the shorter `power2.out`
+	// because it travels almost no distance and a long curve would read as lag.
+	const PANEL_DURATION = 0.6;
+	const TEXT_DURATION = 0.55;
+	const TEXT_STAGGER = 0.055;
+	const ICON_DURATION = 0.35;
+
+	// How far the coloured sheet runs ahead of the neutral one. Enough that the
+	// colour is unmistakably travelling before it gets covered, short enough that
+	// the two still read as one sheet rather than two separate panels.
+	const SWEEP_LEAD = 0.14;
+
+	// Closing is the same timeline reversed, played faster: leaving is an
+	// acknowledged decision, and replaying the full entrance backwards at entrance
+	// speed makes a dismissal feel like it's being negotiated.
+	const CLOSE_TIME_SCALE = 1.5;
+
+	// A branch opening is a smaller event than the menu arriving, so it gets
+	// shorter curves — matching the entrance timings here would make one tap read
+	// as another full page transition.
+	//
+	// `power2.out`, not the `power3.out` used for the full-height panel: a branch
+	// is only ~90px tall, and over that distance `power3` spends three quarters of
+	// the travel in its first third, which the eye reads as a pop followed by a
+	// crawl rather than as one opening. The gentler curve spends about half.
+	const SUB_OPEN_DURATION = 0.5;
+	const SUB_CLOSE_DURATION = 0.35;
+
+	// The gap opens before the labels ride up into it. Without this offset both
+	// start together, so there is nothing left to reveal — the words are already
+	// in place by the time the panel finishes, and the branch looks like it
+	// simply appeared at full size.
+	const SUB_TEXT_DELAY = 0.12;
+	const SUB_TEXT_DURATION = 0.45;
+	const SUB_TEXT_STAGGER = 0.07;
+	const SUB_TEXT_OUT_DURATION = 0.25;
+	const CHEVRON_DURATION = 0.35;
+
+	const MASK_OFFSET = 115;
+
+	const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+	function setupMobileMenu() {
+		const root = document.querySelector<HTMLElement>('[data-menu-root]');
+		const bg = root?.querySelector<HTMLElement>('[data-menu-bg]');
+		const sweep = root?.querySelector<HTMLElement>('[data-menu-sweep]');
+		const closeButton = root?.querySelector<HTMLElement>('[data-menu-close]');
+		const openButton = document.querySelector<HTMLElement>('[data-menu-open]');
+		if (!root || !bg || !sweep || !closeButton || !openButton) return;
+
+		// Only the top-level labels ride the entrance stagger. Sub-labels live in
+		// collapsed panels, so including them would spend stagger time animating
+		// nothing visible and push the close icon late for no reason.
+		const texts = gsap.utils.toArray<HTMLElement>('[data-menu-text]', root);
+		// Not inside any mask, so without their own fade they sit visible on the
+		// panel while the labels they belong to are still hidden underneath it.
+		const chevronWraps = gsap.utils.toArray<HTMLElement>('[data-menu-chevron-wrap]', root);
+		let open = false;
+
+		// Built once and replayed: rebuilding per open would re-read layout on a
+		// frame where the panel is mid-reveal, and any tween still running from a
+		// previous open would fight the new one for the same properties.
+		const timeline = gsap.timeline({
+			paused: true,
+			onReverseComplete: () => {
+				gsap.set(root, { autoAlpha: 0 });
+				gsap.set([sweep, bg, ...texts], { willChange: 'auto' });
+			},
+			onComplete: () => gsap.set([sweep, bg, ...texts], { willChange: 'auto' }),
+		});
+
+		timeline
+			.fromTo(
+				sweep,
+				{ yPercent: 100 },
+				{ yPercent: 0, duration: PANEL_DURATION, ease: 'power3.out', force3D: true },
+			)
+			// Absolute position, not relative: the neutral sheet has to start while
+			// the coloured one is still climbing, so they overlap into one sweep.
+			.fromTo(
+				bg,
+				{ yPercent: 100 },
+				{ yPercent: 0, duration: PANEL_DURATION, ease: 'power3.out', force3D: true },
+				SWEEP_LEAD,
+			)
+			// Overlapping the panel's tail rather than queueing after it: the words
+			// start while the panel is still settling, which is what makes them look
+			// carried up by it instead of arriving as a second, separate event.
+			.fromTo(
+				texts,
+				{ yPercent: MASK_OFFSET },
+				{
+					yPercent: 0,
+					duration: TEXT_DURATION,
+					ease: 'power3.out',
+					stagger: TEXT_STAGGER,
+					force3D: true,
+				},
+				`-=${PANEL_DURATION * 0.35}`,
+			)
+			// Same stagger as the labels, started with them: each chevron arrives
+			// with the row it belongs to instead of announcing it early.
+			.fromTo(
+				chevronWraps,
+				{ autoAlpha: 0 },
+				{
+					autoAlpha: 1,
+					duration: TEXT_DURATION,
+					ease: 'power2.out',
+					stagger: TEXT_STAGGER,
+				},
+				'<',
+			)
+			.fromTo(
+				closeButton,
+				{ autoAlpha: 0, scale: 0.7 },
+				{ autoAlpha: 1, scale: 1, duration: ICON_DURATION, ease: 'power2.out' },
+				`-=${ICON_DURATION * 0.5}`,
+			);
+
+		// Each panel is height-tweened to `auto` at tween time rather than measured
+		// up front: while the viewport is desktop-width the whole overlay is
+		// `display: none`, so anything measured at load would record zero.
+		type Group = {
+			element: HTMLElement;
+			collapse: (instant?: boolean, swapping?: boolean) => void;
+		};
+		const groups: Group[] = gsap.utils.toArray<HTMLElement>('[data-menu-group]', root).map((element) => {
+			const toggle = element.querySelector<HTMLElement>('[data-menu-toggle]');
+			const panel = element.querySelector<HTMLElement>('[data-menu-sub]');
+			const chevron = element.querySelector<HTMLElement>('[data-menu-chevron]');
+			const items = gsap.utils.toArray<HTMLElement>('[data-menu-subtext]', element);
+			let expanded = false;
+
+			// `swapping` is set when this branch is closing only because another one
+			// is opening. The list is vertically centred, so the two panels have to
+			// trade height on the same curve over the same time: then every pixel one
+			// loses the other gains in the same frame, the total stays put, and the
+			// list stops sliding under the finger that tapped it. Closing on its own
+			// mirror curve here instead produces a 32px rise followed by a 37px drop,
+			// which reads as the branch jumping into place rather than opening.
+			function collapse(instant = false, swapping = false) {
+				if (!expanded) return;
+				expanded = false;
+				toggle?.setAttribute('aria-expanded', 'false');
+
+				if (instant || reduceMotion()) {
+					gsap.set(panel, { height: 0 });
+					gsap.set(items, { yPercent: MASK_OFFSET });
+					gsap.set(chevron, { rotate: 0 });
+					return;
+				}
+
+				// Killed explicitly rather than left to `overwrite` on the delayed
+				// tweens below: `overwrite` only purges once a tween initialises, so
+				// a tween still waiting out its delay would let the opening one keep
+				// growing the panel for those few frames.
+				gsap.killTweensOf([panel, chevron, ...items]);
+
+				gsap.to(chevron, {
+					rotate: 0,
+					duration: CHEVRON_DURATION,
+					ease: 'power2.out',
+				});
+				// The mirror of opening: labels drop back into their masks, last one
+				// first, and the panel closes behind them. Collapsing the panel while
+				// the labels sit still just crops them, which reads as the branch
+				// being cut off rather than put away.
+				gsap.to(items, {
+					yPercent: MASK_OFFSET,
+					duration: SUB_TEXT_OUT_DURATION,
+					ease: 'power2.in',
+					stagger: { each: SUB_TEXT_STAGGER, from: 'end' },
+					force3D: true,
+				});
+				gsap.to(panel, {
+					height: 0,
+					duration: swapping ? SUB_OPEN_DURATION : SUB_CLOSE_DURATION,
+					ease: swapping ? 'power2.out' : 'power2.in',
+					// No delay when swapping: the hand-off only cancels out if both
+					// panels are moving on the very same frames.
+					delay: swapping ? 0 : SUB_TEXT_DELAY,
+				});
+			}
+
+			function expand() {
+				if (expanded) return;
+				expanded = true;
+				toggle?.setAttribute('aria-expanded', 'true');
+
+				if (reduceMotion()) {
+					gsap.set(panel, { height: 'auto' });
+					gsap.set(items, { yPercent: 0 });
+					gsap.set(chevron, { rotate: 180 });
+					return;
+				}
+
+				gsap.killTweensOf([panel, chevron, ...items]);
+
+				gsap.to(chevron, {
+					rotate: 180,
+					duration: CHEVRON_DURATION,
+					ease: 'power2.out',
+				});
+				gsap.to(panel, {
+					height: 'auto',
+					duration: SUB_OPEN_DURATION,
+					ease: 'power2.out',
+					// Left at `auto` so a later viewport change or font swap reflows the
+					// open panel instead of pinning it to the height it opened at.
+					onComplete: () => gsap.set(panel, { height: 'auto' }),
+				});
+				gsap.fromTo(
+					items,
+					{ yPercent: MASK_OFFSET },
+					{
+						yPercent: 0,
+						duration: SUB_TEXT_DURATION,
+						ease: 'power2.out',
+						stagger: SUB_TEXT_STAGGER,
+						delay: SUB_TEXT_DELAY,
+						force3D: true,
+					},
+				);
+			}
+
+			toggle?.addEventListener('click', () => {
+				if (expanded) {
+					collapse();
+					return;
+				}
+				// One branch at a time: on a phone two open panels push the rest of the
+				// list off-screen, so the list stops being scannable. Closed in
+				// swap mode so its height goes straight into the branch opening.
+				groups.forEach((other) => {
+					if (other.element !== element) other.collapse(false, true);
+				});
+				expand();
+			});
+
+			return { element, collapse };
+		});
+
+		function openMenu() {
+			if (open) return;
+			open = true;
+			openButton!.setAttribute('aria-expanded', 'true');
+			root!.removeAttribute('inert');
+			// The page behind must not scroll while the panel owns the viewport —
+			// otherwise a swipe on the overlay drags the document underneath it.
+			document.documentElement.style.overflow = 'hidden';
+
+			if (reduceMotion()) {
+				gsap.set(root!, { autoAlpha: 1 });
+				timeline.progress(1).pause();
+				closeButton!.focus();
+				return;
+			}
+
+			// Layers promoted before the first frame, not during it: asking the
+			// compositor for them mid-tween costs a frame right where the motion
+			// starts, which is the one place a hitch is visible.
+			gsap.set(root!, { autoAlpha: 1 });
+			gsap.set([sweep!, bg!, ...texts], { willChange: 'transform' });
+			timeline.timeScale(1).play();
+			closeButton!.focus();
+		}
+
+		function closeMenu() {
+			if (!open) return;
+			open = false;
+			openButton!.setAttribute('aria-expanded', 'false');
+			root!.setAttribute('inert', '');
+			document.documentElement.style.overflow = '';
+			openButton!.focus();
+
+			// Collapsed without animation, behind a panel that is already on its way
+			// out: reopening should start from the top of the list, not from whichever
+			// branch happened to be left open.
+			groups.forEach((entry) => entry.collapse(true));
+
+			if (reduceMotion()) {
+				timeline.progress(0).pause();
+				gsap.set(root!, { autoAlpha: 0 });
+				return;
+			}
+
+			gsap.set([sweep!, bg!, ...texts], { willChange: 'transform' });
+			timeline.timeScale(CLOSE_TIME_SCALE).reverse();
+		}
+
+		openButton.addEventListener('click', openMenu);
+		closeButton.addEventListener('click', closeMenu);
+
+		document.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape' && open) closeMenu();
+		});
+
+		// A viewport that grows past the mobile breakpoint leaves the panel open
+		// over a desktop nav that is already usable, with its own hamburger gone.
+		window.matchMedia('(min-width: 48rem)').addEventListener('change', (event) => {
+			if (event.matches && open) closeMenu();
+		});
+	}
+
+	setupMobileMenu();
+</script>

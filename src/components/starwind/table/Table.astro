@@ -9,7 +9,7 @@ type Props = HTMLAttributes<"table"> & VariantProps<typeof table>;
 const { class: className, ...rest } = Astro.props;
 ---
 
-<div data-slot="table-container" class="relative w-full overflow-x-auto">
+<div data-slot="table-container" class="relative w-full min-w-0 overflow-x-auto">
   <table class={table({ class: className })} {...rest} data-slot="table">
     <slot />
   </table>

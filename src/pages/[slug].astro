@@ -58,13 +58,20 @@ const { data: components } = page
 	.page {
 		max-width: 1539px;
 		margin: 0 auto;
-		padding: 2rem 3rem;
+		/* 3rem either side takes a quarter of a phone's width away from the
+		   components this page exists to show. */
+		padding: 1.5rem 1rem;
+	}
+	@media (min-width: 40rem) {
+		.page {
+			padding: 2rem 3rem;
+		}
 	}
 	.page-header {
 		margin-bottom: 1.5rem;
 	}
 	.page-header h1 {
-		font-size: 1.75rem;
+		font-size: clamp(1.5rem, 6vw, 1.75rem);
 		font-weight: 700;
 	}
 	.page-description {

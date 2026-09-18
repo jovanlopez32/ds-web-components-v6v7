@@ -22,16 +22,16 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/starwind/
 ---
 
 <Layout title="LeadVenture">
-	<main class="flex min-h-screen flex-col items-center justify-center gap-6">
+	<main class="flex min-h-[100dvh] flex-col items-center justify-center gap-6 px-4 py-10">
 		<h1 class="text-3xl font-bold">Pedro Ruiz Page</h1>
 		
-		<div class="flex flex-col item-center justify-center gap-6">
+		<div class="flex max-w-full min-w-0 flex-col item-center justify-center gap-6">
 			<h3 class="text-2xl font-bold">button</h3>
 			<Button>Save</Button>
 			<Button href="#api-reference" variant="outline">View API</Button>
 		</div>
 
-		<div class="flex flex-col item-center justify-center gap-6">
+		<div class="flex max-w-full min-w-0 flex-col item-center justify-center gap-6">
 			<h3 class="text-2xl font-bold">Popover</h3>
 			<Popover>
 				<PopoverTrigger asChild>
@@ -66,7 +66,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/starwind/
 			</Popover>
 		</div>
 		
-		<div class="flex flex-col item-center justify-center gap-6">
+		<div class="flex max-w-full min-w-0 flex-col item-center justify-center gap-6">
 			<h3 class="text-2xl font-bold">table</h3>
 			<Table class="max-w-md mx-auto">
 				<TableCaption>Example of a simple table</TableCaption>
@@ -97,7 +97,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/starwind/
 			</Table>
 		</div>
 
-		<div class="flex flex-col item-center justify-center gap-6">
+		<div class="flex max-w-full min-w-0 flex-col item-center justify-center gap-6">
 			<h3 class="text-2xl font-bold">tabs</h3>
 			<Tabs defaultValue="astro" class="max-w-[400px]">
 				<TabsList>

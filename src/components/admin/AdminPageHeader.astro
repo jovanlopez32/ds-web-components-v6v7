@@ -1,0 +1,56 @@
+---
+import { Separator } from '@/components/starwind/separator';
+import IconArrowNarrowLeft from '@tabler/icons/outline/arrow-narrow-left.svg';
+
+interface Props {
+	title: string;
+	/** Where the back link goes. The label defaults to the dashboard wording. */
+	backHref: string;
+	backLabel?: string;
+	description?: string;
+	class?: string;
+}
+
+const {
+	title,
+	backHref,
+	backLabel = 'Volver al dashboard',
+	description,
+	class: className,
+} = Astro.props;
+
+// Renders the right-hand column only when the page actually passes actions, so
+// a header without them keeps the title on a single baseline instead of
+// leaving an empty flex child next to it.
+const hasActions = Astro.slots.has('actions');
+---
+
+<header class:list={['flex flex-col', className]}>
+	<a
+		href={backHref}
+		class="group -mx-2 inline-flex w-fit items-center gap-1.5 rounded-md px-2 py-1 text-sm text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-outline/50"
+	>
+		<IconArrowNarrowLeft
+			class="size-4 transition-transform duration-200 group-hover:-translate-x-0.5 motion-reduce:transition-none"
+			aria-hidden="true"
+		/>
+		{backLabel}
+	</a>
+
+	<div class="mt-2 flex flex-col gap-4 sm:mt-3 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
+		<div class="min-w-0">
+			<h1 class="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">{title}</h1>
+			{description && (
+				<p class="mt-2 max-w-[60ch] text-sm leading-relaxed text-muted-foreground">{description}</p>
+			)}
+		</div>
+
+		{hasActions && (
+			<div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
+				<slot name="actions" />
+			</div>
+		)}
+	</div>
+
+	<Separator class="mt-6" />
+</header>

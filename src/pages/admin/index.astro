@@ -2,7 +2,6 @@
 export const prerender = false;
 
 import Layout from '../../layouts/AdminLayout.astro';
-import AdminNav from '../../components/AdminNav.astro';
 import { Button } from '@/components/starwind/button';
 
 const user = Astro.locals.user;
@@ -16,7 +15,6 @@ const user = Astro.locals.user;
 				<Button type="submit" size="sm">Cerrar sesión</Button>
 			</form>
 		</header>
-		<AdminNav />
 		<p>Sesión iniciada como {user?.email}</p>
 		<a href="/admin/users/new">Crear cuenta de admin</a>
 	</main>
@@ -30,7 +28,9 @@ const user = Astro.locals.user;
 	}
 	header {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		justify-content: space-between;
+		gap: 0.5rem 1rem;
 	}
 </style>

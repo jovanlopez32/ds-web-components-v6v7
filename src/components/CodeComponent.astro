@@ -174,11 +174,11 @@ const PRESETS = [
 				)}
 			</div>
 
-			<div class="flex items-stretch justify-center gap-2" data-cc-stage>
+			<div class="-mx-4 flex items-stretch justify-center gap-2 sm:mx-0" data-cc-stage>
 				<div
 					class="relative overflow-hidden bg-background"
 					id={frameId}
-					style={`width: 100%; min-width: 320px; max-width: calc(100% - 2rem); height: ${height};`}
+					style={`width: 100%; height: ${height};`}
 					data-cc-frame
 				>
 					<!--
@@ -278,7 +278,7 @@ const PRESETS = [
 				</div>
 
 				<div
-					class="flex w-6 shrink-0 cursor-col-resize items-center justify-center bg-muted text-muted-foreground transition-colors hover:bg-primary/15 hover:text-primary active:bg-primary/20"
+					class="hidden w-6 shrink-0 cursor-col-resize items-center justify-center bg-muted text-muted-foreground transition-colors hover:bg-primary/15 hover:text-primary active:bg-primary/20 sm:flex"
 					data-cc-handle
 					title="Arrastra para cambiar el ancho de la vista previa"
 					aria-label="Redimensionar la vista previa"
@@ -293,6 +293,26 @@ const PRESETS = [
 }
 
 <style>
+	/*
+	 * 320px of minimum width plus the 24px resize rail and its gap needs 352px,
+	 * which a 390px phone does not have once the card's own padding is taken
+	 * out — the frame used to spill past the card and lose its left edge. The
+	 * rail is a pointer-drag affordance with no touch equivalent, so below sm
+	 * it is hidden and the frame stops reserving room for it. The preset
+	 * buttons stay, and they are the control that works under a thumb.
+	 */
+	[data-cc-frame] {
+		min-width: 0;
+		max-width: 100%;
+	}
+
+	@media (min-width: 40rem) {
+		[data-cc-frame] {
+			min-width: 320px;
+			max-width: calc(100% - 2rem);
+		}
+	}
+
 	[data-cc-panel] :global(pre) {
 		margin: 0;
 		padding: 1rem;

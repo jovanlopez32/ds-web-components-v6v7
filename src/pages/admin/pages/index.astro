@@ -3,7 +3,7 @@ export const prerender = false;
 
 import { actions, isInputError } from 'astro:actions';
 import Layout from '../../../layouts/AdminLayout.astro';
-import AdminNav from '../../../components/AdminNav.astro';
+import AdminPageHeader from '@/components/admin/AdminPageHeader.astro';
 import { createUserClient } from '../../../lib/supabase';
 import { Button } from '@/components/starwind/button';
 import { Input } from '@/components/starwind/input';
@@ -20,6 +20,12 @@ import {
 	AlertDialogCancel,
 	AlertDialogAction,
 } from '@/components/starwind/alert-dialog';
+import IconPlus from '@tabler/icons/outline/plus.svg';
+import IconGripVertical from '@tabler/icons/outline/grip-vertical.svg';
+import IconChevronRight from '@tabler/icons/outline/chevron-right.svg';
+import IconExternalLink from '@tabler/icons/outline/external-link.svg';
+import IconTrash from '@tabler/icons/outline/trash.svg';
+import IconSitemap from '@tabler/icons/outline/sitemap.svg';
 
 const accessToken = Astro.cookies.get('sb-access-token')?.value;
 
@@ -41,129 +47,261 @@ const inputErrors = isInputError(createResult?.error) ? createResult.error.field
 // this is the whole tree; see the check constraint note in the init migration.
 const topLevel = (pages ?? []).filter((page) => !page.parent_id);
 const childrenOf = (parentId: string) => (pages ?? []).filter((page) => page.parent_id === parentId);
+
+const childCount = (pages ?? []).length - topLevel.length;
+const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
+
+const summary =
+	topLevel.length === 0
+		? undefined
+		: `${plural(topLevel.length, 'page principal', 'pages principales')} y ${plural(childCount, 'subpágina', 'subpáginas')}. Arrastra para reordenar.`;
 ---
 
 <Layout title="Pages">
-	<main class="pages">
-		<header>
-			<h1>Pages</h1>
-			<a href="/admin">&larr; Volver al dashboard</a>
-		</header>
-		<AdminNav current="pages" />
+	<main class="mx-auto w-full max-w-3xl px-4 pb-20 sm:px-6">
+		<AdminPageHeader title="Pages" backHref="/admin" description={summary}>
+			<AlertDialog slot="actions" class="w-full sm:w-auto">
+				<AlertDialogTrigger asChild>
+					<Button type="button" size="sm" class="w-full sm:w-auto">
+						<IconPlus class="size-4" aria-hidden="true" />
+						Nueva page
+					</Button>
+				</AlertDialogTrigger>
 
-		{error && <p class="error">No se pudieron cargar las pages.</p>}
+				<AlertDialogContent>
+					<form method="POST" action={actions.pages.create}>
+						<AlertDialogHeader>
+							<AlertDialogTitle>Nueva page</AlertDialogTitle>
+						</AlertDialogHeader>
+
+						<div class="mt-5 flex flex-col gap-4">
+							<div class="flex flex-col gap-2">
+								<Label for="title">Título</Label>
+								<Input type="text" name="title" id="title" required />
+							</div>
+
+							<div class="flex flex-col gap-2">
+								<Label for="slug">Slug público</Label>
+								<Input
+									type="text"
+									name="slug"
+									id="slug"
+									required
+									pattern="[a-z0-9-]+"
+									placeholder="mi-page"
+								/>
+							</div>
+
+							<div class="flex flex-col gap-2">
+								<Label for="parentId">Page padre</Label>
+								<!--
+									Only top-level pages are offered, which keeps the tree two
+									levels deep and makes a parent cycle impossible to create
+									through the UI.
+								-->
+								<NativeSelect name="parentId" id="parentId">
+									<option value="">Ninguna (page principal)</option>
+									{topLevel.map((page) => <option value={page.id}>{page.title}</option>)}
+								</NativeSelect>
+							</div>
+
+							<div class="flex flex-col gap-2">
+								<Label for="description">Descripción</Label>
+								<Textarea name="description" id="description" rows="3" />
+							</div>
+						</div>
+
+						<AlertDialogFooter class="mt-6">
+							<AlertDialogCancel>Cancelar</AlertDialogCancel>
+							<AlertDialogAction type="submit">Crear</AlertDialogAction>
+						</AlertDialogFooter>
+					</form>
+				</AlertDialogContent>
+			</AlertDialog>
+		</AdminPageHeader>
+
+		{error && (
+			<p class="mt-6 rounded-md border border-error/40 bg-error/10 px-4 py-3 text-sm text-foreground">
+				No se pudieron cargar las pages.
+			</p>
+		)}
 		{createResult?.error && !isInputError(createResult.error) && (
-			<p class="error">{createResult.error.message}</p>
+			<p class="mt-6 rounded-md border border-error/40 bg-error/10 px-4 py-3 text-sm text-foreground">
+				{createResult.error.message}
+			</p>
 		)}
 		{Object.keys(inputErrors).length > 0 && (
-			<p class="error">{Object.values(inputErrors).flat().join(' ')}</p>
+			<p class="mt-6 rounded-md border border-error/40 bg-error/10 px-4 py-3 text-sm text-foreground">
+				{Object.values(inputErrors).flat().join(' ')}
+			</p>
 		)}
 
-		<AlertDialog>
-			<AlertDialogTrigger asChild class="open-create-page">
-				<Button type="button">Nueva page</Button>
-			</AlertDialogTrigger>
+		{topLevel.length === 0 && !error && (
+			<div class="mt-8 flex flex-col items-center gap-3 rounded-lg border border-dashed border-border px-6 py-12 text-center">
+				<IconSitemap class="size-8 text-muted-foreground" aria-hidden="true" />
+				<p class="text-base font-medium text-foreground">Todavía no hay pages</p>
+				<p class="max-w-[40ch] text-sm text-muted-foreground">
+					Crea la primera page y después cuélgale subpáginas eligiéndola como page padre.
+				</p>
+			</div>
+		)}
 
-			<AlertDialogContent>
-				<form method="POST" action={actions.pages.create} class="create-page-form">
-					<AlertDialogHeader>
-						<AlertDialogTitle>Nueva page</AlertDialogTitle>
-					</AlertDialogHeader>
+		<ul class="page-list mt-8 flex flex-col gap-3">
+			{topLevel.map((page) => {
+				const children = childrenOf(page.id);
 
-					<div class="create-page-fields">
-						<Label for="title">Título</Label>
-						<Input type="text" name="title" id="title" required />
-
-						<Label for="slug">Slug público</Label>
-						<Input type="text" name="slug" id="slug" required pattern="[a-z0-9-]+" placeholder="mi-page" />
-
-						<Label for="parentId">Page padre</Label>
-						<!--
-							Only top-level pages are offered, which keeps the tree two
-							levels deep and makes a parent cycle impossible to create
-							through the UI.
-						-->
-						<NativeSelect name="parentId" id="parentId">
-							<option value="">Ninguna (page principal)</option>
-							{topLevel.map((page) => <option value={page.id}>{page.title}</option>)}
-						</NativeSelect>
-
-						<Label for="description">Descripción</Label>
-						<Textarea name="description" id="description" rows="3" />
-					</div>
-
-					<AlertDialogFooter>
-						<AlertDialogCancel>Cancelar</AlertDialogCancel>
-						<AlertDialogAction type="submit">Crear</AlertDialogAction>
-					</AlertDialogFooter>
-				</form>
-			</AlertDialogContent>
-		</AlertDialog>
-
-		{topLevel.length === 0 && <p class="empty">Todavía no hay pages.</p>}
-
-		<ul class="page-list">
-			{topLevel.map((page) => (
-				<li data-id={page.id}>
-					<div class="page-row">
-						<span class="drag-handle" title="Arrastrar para reordenar">
-							<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-								<circle cx="9" cy="6" r="1.5" /><circle cx="15" cy="6" r="1.5" />
-								<circle cx="9" cy="12" r="1.5" /><circle cx="15" cy="12" r="1.5" />
-								<circle cx="9" cy="18" r="1.5" /><circle cx="15" cy="18" r="1.5" />
-							</svg>
-						</span>
-						<div>
-							<strong>{page.title}</strong>
-							<a class="slug" href={`/${page.slug}`} target="_blank">/{page.slug}</a>
-							{page.description && <p>{page.description}</p>}
-						</div>
-						<div class="page-actions">
-							<a class="manage" href={`/admin/pages/${page.admin_slug}`}>Gestionar</a>
-							<form
-								method="POST"
-								action={actions.pages.remove}
-								onsubmit="return confirm('¿Eliminar esta page? También se borran sus subpáginas y componentes.')"
+				return (
+					<li class="overflow-hidden rounded-lg border border-border bg-card" data-id={page.id}>
+						{/*
+							Wraps on purpose: the actions block is `w-full` below `sm`, which
+							pushes it onto its own line instead of squeezing the title into a
+							two-character column on a phone.
+						*/}
+						<div class="flex flex-wrap items-start gap-x-3 gap-y-3 p-3 sm:p-4">
+							<span
+								class="drag-handle mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+								title="Arrastrar para reordenar"
 							>
-								<input type="hidden" name="id" value={page.id} />
-								<Button type="submit" variant="error" size="sm">Eliminar</Button>
-							</form>
-						</div>
-					</div>
+								<IconGripVertical class="size-4" aria-hidden="true" />
+							</span>
 
-					{childrenOf(page.id).length > 0 && (
-						<ul class="subpage-list">
-							{childrenOf(page.id).map((child) => (
-								<li class="page-row" data-id={child.id}>
-									<span class="drag-handle" title="Arrastrar para reordenar">
-										<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-											<circle cx="9" cy="6" r="1.5" /><circle cx="15" cy="6" r="1.5" />
-											<circle cx="9" cy="12" r="1.5" /><circle cx="15" cy="12" r="1.5" />
-											<circle cx="9" cy="18" r="1.5" /><circle cx="15" cy="18" r="1.5" />
-										</svg>
-									</span>
-									<div>
-										<strong>{child.title}</strong>
-										<a class="slug" href={`/${child.slug}`} target="_blank">/{child.slug}</a>
-										{child.description && <p>{child.description}</p>}
-									</div>
-									<div class="page-actions">
-										<a class="manage" href={`/admin/pages/${child.admin_slug}`}>Gestionar</a>
-										<form
-											method="POST"
-											action={actions.pages.remove}
-											onsubmit="return confirm('¿Eliminar esta subpágina y sus componentes?')"
+							<div class="min-w-0 flex-1 basis-40">
+								<strong class="block text-base font-semibold text-foreground">{page.title}</strong>
+								<a
+									href={`/${page.slug}`}
+									target="_blank"
+									rel="noreferrer"
+									class="mt-0.5 inline-flex max-w-full items-center gap-1 truncate text-xs text-muted-foreground transition-colors hover:text-foreground"
+								>
+									/{page.slug}
+									<IconExternalLink class="size-3 shrink-0" aria-hidden="true" />
+								</a>
+
+								{page.description && (
+									<p class="mt-1 line-clamp-2 text-sm text-muted-foreground">{page.description}</p>
+								)}
+							</div>
+
+							<div class="flex w-full items-center gap-2 sm:w-auto">
+								<Button
+									as="a"
+									href={`/admin/pages/${page.admin_slug}`}
+									variant="outline"
+									size="sm"
+									class="flex-1 sm:flex-none"
+								>
+									Gestionar
+								</Button>
+								{/*
+									Icon-only: the destructive action keeps its colour without
+									taking half the row's width away from Gestionar on a phone.
+								*/}
+								<form
+									method="POST"
+									action={actions.pages.remove}
+									class="shrink-0"
+									data-confirm="¿Eliminar esta page? También se borran sus subpáginas y componentes."
+								>
+									<input type="hidden" name="id" value={page.id} />
+									<Button
+										type="submit"
+										variant="error"
+										size="icon-sm"
+										title="Eliminar page"
+										aria-label={`Eliminar ${page.title}`}
+									>
+										<IconTrash class="size-4" aria-hidden="true" />
+									</Button>
+								</form>
+							</div>
+						</div>
+
+						{/*
+							Native <details> rather than a scripted panel: the count is always
+							visible, the group collapses without any JavaScript, and nothing
+							can flash open before a hydration step runs.
+						*/}
+						{children.length > 0 ? (
+							<details class="subpages group border-t border-border">
+								<summary class="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-xs font-medium text-foreground outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-outline/50 focus-visible:ring-inset sm:px-4 [&::-webkit-details-marker]:hidden">
+									<IconChevronRight
+										class="size-3.5 text-muted-foreground transition-transform duration-200 group-open:rotate-90 motion-reduce:transition-none"
+										aria-hidden="true"
+									/>
+									{plural(children.length, 'subpágina', 'subpáginas')}
+								</summary>
+
+								<ul class="subpage-list flex flex-col gap-2 px-3 pt-1 pb-3 sm:px-4 sm:pb-4">
+									{children.map((child) => (
+										<li
+											class="flex flex-wrap items-start gap-x-3 gap-y-3 rounded-md border border-border bg-muted/40 p-2.5 sm:p-3"
+											data-id={child.id}
 										>
-											<input type="hidden" name="id" value={child.id} />
-											<Button type="submit" variant="error" size="sm">Eliminar</Button>
-										</form>
-									</div>
-								</li>
-							))}
-						</ul>
-					)}
-				</li>
-			))}
+											<span
+												class="drag-handle mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+												title="Arrastrar para reordenar"
+											>
+												<IconGripVertical class="size-4" aria-hidden="true" />
+											</span>
+
+											<div class="min-w-0 flex-1 basis-40">
+												<strong class="block text-sm font-semibold text-foreground">{child.title}</strong>
+												<a
+													href={`/${child.slug}`}
+													target="_blank"
+													rel="noreferrer"
+													class="mt-0.5 inline-flex max-w-full items-center gap-1 truncate text-xs text-muted-foreground transition-colors hover:text-foreground"
+												>
+													/{child.slug}
+													<IconExternalLink class="size-3 shrink-0" aria-hidden="true" />
+												</a>
+												{child.description && (
+													<p class="mt-1 line-clamp-2 text-sm text-muted-foreground">
+														{child.description}
+													</p>
+												)}
+											</div>
+
+											<div class="flex w-full items-center gap-2 sm:w-auto">
+												<Button
+													as="a"
+													href={`/admin/pages/${child.admin_slug}`}
+													variant="outline"
+													size="sm"
+													class="flex-1 sm:flex-none"
+												>
+													Gestionar
+												</Button>
+												<form
+													method="POST"
+													action={actions.pages.remove}
+													class="shrink-0"
+													data-confirm="¿Eliminar esta subpágina y sus componentes?"
+												>
+													<input type="hidden" name="id" value={child.id} />
+													<Button
+														type="submit"
+														variant="error"
+														size="icon-sm"
+														title="Eliminar subpágina"
+														aria-label={`Eliminar ${child.title}`}
+													>
+														<IconTrash class="size-4" aria-hidden="true" />
+													</Button>
+												</form>
+											</div>
+										</li>
+									))}
+								</ul>
+							</details>
+						) : (
+							<p class="border-t border-border px-3 py-2.5 text-xs text-muted-foreground sm:px-4">
+								Sin subpáginas
+							</p>
+						)}
+					</li>
+				);
+			})}
 		</ul>
 	</main>
 </Layout>
@@ -193,6 +331,14 @@ const childrenOf = (parentId: string) => (pages ?? []).filter((page) => page.par
 	makeSortable(document.querySelector('.page-list'), actions.pages.reorder);
 	document.querySelectorAll('.subpage-list').forEach((el) => makeSortable(el, actions.pages.reorder));
 
+	// The delete forms post straight to the action, so they keep working without
+	// JavaScript — this only adds the confirmation step when it is available.
+	document.querySelectorAll<HTMLFormElement>('form[data-confirm]').forEach((form) => {
+		form.addEventListener('submit', (event) => {
+			if (!confirm(form.dataset.confirm!)) event.preventDefault();
+		});
+	});
+
 	// Derive the slug from the title until the author edits the slug themselves.
 	const titleInput = document.getElementById('title') as HTMLInputElement | null;
 	const slugInput = document.getElementById('slug') as HTMLInputElement | null;
@@ -211,81 +357,7 @@ const childrenOf = (parentId: string) => (pages ?? []).filter((page) => page.par
 </script>
 
 <style>
-	.pages {
-		max-width: 800px;
-		margin: 2rem auto;
-		padding: 0 1rem;
-	}
-	header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-	}
-	header a {
-		color: #6b7280;
-		text-decoration: none;
-	}
-	.error {
-		padding: 0.6rem 0.85rem;
-		border-radius: 4px;
-		background: #fef2f2;
-		border: 1px solid #fecaca;
-		color: #b91c1c;
-		font-size: 0.875rem;
-	}
-	.empty {
-		color: #6b7280;
-	}
-	.open-create-page {
-		margin-bottom: 1.25rem;
-	}
-	.create-page-form {
-		display: flex;
-		flex-direction: column;
-		gap: 1.25rem;
-	}
-	.create-page-fields {
-		display: flex;
-		flex-direction: column;
-	}
-	.create-page-fields :global([data-slot='label']) {
-		margin-top: 0.9rem;
-		margin-bottom: 0.25rem;
-	}
-	.create-page-fields :global([data-slot='label']):first-child {
-		margin-top: 0;
-	}
-	.page-list,
-	.subpage-list {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-	}
-	.page-list {
-		display: flex;
-		flex-direction: column;
-		gap: 0.6rem;
-	}
-	.page-row {
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-		padding: 0.7rem 1rem;
-		border: 1px solid #e5e7eb;
-		border-radius: 6px;
-	}
-	.page-row > div:not(.page-actions) {
-		flex: 1;
-	}
-	.page-row p {
-		margin: 0.25rem 0 0;
-		color: #6b7280;
-		font-size: 0.875rem;
-	}
 	.drag-handle {
-		display: flex;
-		flex-shrink: 0;
-		color: #9ca3af;
 		cursor: grab;
 		touch-action: none;
 	}
@@ -296,33 +368,28 @@ const childrenOf = (parentId: string) => (pages ?? []).filter((page) => page.par
 		opacity: 0.4;
 	}
 	.sortable-drag {
-		background: #f9fafb;
+		background: var(--muted);
 	}
-	.slug {
-		display: block;
-		color: #6b7280;
-		font-size: 0.8125rem;
-		text-decoration: none;
+
+	/* Animates the disclosure where `::details-content` and `interpolate-size`
+	   are supported, and simply snaps open where they aren't. */
+	.subpages {
+		interpolate-size: allow-keywords;
 	}
-	.page-actions {
-		display: flex;
-		align-items: center;
-		gap: 0.6rem;
-		flex-shrink: 0;
+	.subpages::details-content {
+		height: 0;
+		overflow: hidden;
+		transition:
+			height 0.25s ease,
+			content-visibility 0.25s;
+		transition-behavior: allow-discrete;
 	}
-	.manage {
-		color: #111827;
-		font-size: 0.875rem;
-		font-weight: 600;
+	.subpages[open]::details-content {
+		height: auto;
 	}
-	/* Subpages are indented and marked with a rule, so the hierarchy reads at
-	   a glance without needing a disclosure control. */
-	.subpage-list {
-		margin: 0.5rem 0 0 1.75rem;
-		padding-left: 0.75rem;
-		border-left: 2px solid #e5e7eb;
-		display: flex;
-		flex-direction: column;
-		gap: 0.4rem;
+	@media (prefers-reduced-motion: reduce) {
+		.subpages::details-content {
+			transition: none;
+		}
 	}
 </style>

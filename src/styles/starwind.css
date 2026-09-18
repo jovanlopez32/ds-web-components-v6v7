@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/forms";
-@custom-variant light (&:where(.light, .light *));
+@custom-variant dark (&:where(.dark, .dark *));
 @import '@fontsource/libre-caslon-text';
 @import '@fontsource-variable/lexend/wght.css';
 
@@ -83,14 +83,15 @@
 
 :root {
   --background: var(--color-white);
+  --color-custom-orange: #F7941D;
   --foreground: var(--color-neutral-950);
   --card: var(--color-white);
   --card-foreground: var(--color-neutral-950);
   --popover: var(--color-white);
   --popover-foreground: var(--color-neutral-950);
-  --primary: var(--color-blue-700);
+  --primary: var(--color-custom-orange);
   --primary-foreground: var(--color-neutral-50);
-  --primary-accent: var(--color-blue-700);
+  --primary-accent: var(--color-custom-orange);
   --secondary: var(--color-neutral-200);
   --secondary-foreground: var(--color-neutral-950);
   --secondary-accent: var(--color-neutral-950);
@@ -114,7 +115,7 @@
   /* sidebar variables */
   --sidebar-background: var(--color-neutral-50);
   --sidebar-foreground: var(--color-neutral-950);
-  --sidebar-primary: var(--color-blue-700);
+  --sidebar-primary: var(--color-custom-orange);
   --sidebar-primary-foreground: var(--color-neutral-50);
   --sidebar-accent: var(--color-neutral-100);
   --sidebar-accent-foreground: var(--color-neutral-900);
@@ -122,14 +123,14 @@
   --sidebar-outline: var(--color-neutral-400);
 }
 
-.light {
+.dark {
   --background: var(--color-neutral-950);
   --foreground: var(--color-neutral-50);
   --card: var(--color-neutral-900);
   --card-foreground: var(--color-neutral-50);
   --popover: var(--color-neutral-900);
   --popover-foreground: var(--color-neutral-50);
-  --primary: var(--color-blue-700);
+  --primary: var(--color-custom-orange);
   --primary-foreground: var(--color-neutral-50);
   --primary-accent: var(--color-blue-400);
   --secondary: var(--color-neutral-800);
@@ -154,7 +155,7 @@
   /* sidebars variables */
   --sidebar-background: var(--color-neutral-900);
   --sidebar-foreground: var(--color-neutral-50);
-  --sidebar-primary: var(--color-blue-700);
+  --sidebar-primary: var(--color-custom-orange);
   --sidebar-primary-foreground: var(--color-neutral-50);
   --sidebar-accent: var(--color-neutral-800);
   --sidebar-accent-foreground: var(--color-neutral-100);
@@ -167,7 +168,7 @@
     @apply border-border outline-outline/50;
   }
   body {
-    @apply bg-background text-foreground scheme-light light:scheme-light;
+    @apply bg-background text-foreground scheme-light dark:scheme-dark;
   }
   button {
     @apply cursor-pointer;

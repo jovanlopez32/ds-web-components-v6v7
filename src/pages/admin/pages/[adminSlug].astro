@@ -3,7 +3,6 @@ export const prerender = false;
 
 import { actions } from 'astro:actions';
 import Layout from '../../../layouts/AdminLayout.astro';
-import AdminNav from '../../../components/AdminNav.astro';
 import { createUserClient } from '../../../lib/supabase';
 import { Button } from '@/components/starwind/button';
 
@@ -41,7 +40,6 @@ const errorCode = Astro.url.searchParams.get('error');
 			<h1>{page.title}</h1>
 			<a href="/admin/pages">&larr; Volver a Pages</a>
 		</header>
-		<AdminNav current="pages" />
 
 		<p class="slug">Pública: <a href={`/${page.slug}`} target="_blank">/{page.slug}</a></p>
 		{page.description && <p>{page.description}</p>}
@@ -127,8 +125,10 @@ const errorCode = Astro.url.searchParams.get('error');
 	}
 	header {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		justify-content: space-between;
+		gap: 0.5rem 1rem;
 	}
 	.slug a {
 		color: #6b7280;
@@ -138,8 +138,10 @@ const errorCode = Astro.url.searchParams.get('error');
 	}
 	.components-header {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		justify-content: space-between;
+		gap: 0.5rem 1rem;
 		margin-top: 1.5rem;
 	}
 	.component-list {
@@ -150,10 +152,14 @@ const errorCode = Astro.url.searchParams.get('error');
 		flex-direction: column;
 		gap: 0.6rem;
 	}
+	/* Wraps on a phone: Editar plus Eliminar take 130px of a 326px row, which
+	   leaves the title and its <CodeComponent> snippet fighting over what is
+	   left. Below sm the actions drop onto their own full-width line instead. */
 	.component-list li {
 		display: flex;
-		align-items: center;
-		gap: 1rem;
+		flex-wrap: wrap;
+		align-items: flex-start;
+		gap: 0.75rem 1rem;
 		padding: 0.6rem 1rem;
 		border: 1px solid #e5e7eb;
 		border-radius: 6px;
@@ -179,7 +185,7 @@ const errorCode = Astro.url.searchParams.get('error');
 		flex-direction: column;
 		gap: 0.2rem;
 		min-width: 0;
-		flex: 1;
+		flex: 1 1 12rem;
 	}
 	.component-title {
 		font-weight: 600;
@@ -197,8 +203,19 @@ const errorCode = Astro.url.searchParams.get('error');
 	}
 	.actions {
 		display: flex;
+		width: 100%;
 		align-items: center;
 		gap: 0.75rem;
+	}
+
+	@media (min-width: 40rem) {
+		.component-list li {
+			flex-wrap: nowrap;
+			align-items: center;
+		}
+		.actions {
+			width: auto;
+		}
 	}
 	.actions form {
 		display: inline;

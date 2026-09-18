@@ -22,10 +22,12 @@ import Layout from '../layouts/PublicLayout.astro';
 	}
 
 	.page-shell {
+		/* dvh, so the hero is not pushed under iOS Safari's address bar. */
 		display: grid;
 		min-height: 100vh;
+		min-height: 100dvh;
 		place-items: center;
-		padding: 2rem;
+		padding: 1rem;
 		background:
 			radial-gradient(circle at 15% 20%, rgb(56 189 248 / 22%), transparent 30rem),
 			radial-gradient(circle at 85% 75%, rgb(99 102 241 / 20%), transparent 28rem),
@@ -34,7 +36,9 @@ import Layout from '../layouts/PublicLayout.astro';
 
 	.hero {
 		width: min(100%, 46rem);
-		padding: clamp(2.5rem, 8vw, 5rem);
+		/* The lower bound is the one that matters: 2.5rem a side of a 358px
+		   card left the clamped headline about 278px to live in. */
+		padding: clamp(1.5rem, 8vw, 5rem);
 		border: 1px solid rgb(186 230 253 / 20%);
 		border-radius: 1.5rem;
 		background: rgb(15 23 42 / 70%);

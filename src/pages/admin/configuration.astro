@@ -3,7 +3,6 @@ export const prerender = false;
 
 import { actions } from 'astro:actions';
 import Layout from '../../layouts/AdminLayout.astro';
-import AdminNav from '../../components/AdminNav.astro';
 import { createUserClient } from '../../lib/supabase';
 import { loadPreviewSettings } from '../../lib/settings';
 import { Button } from '@/components/starwind/button';
@@ -30,7 +29,6 @@ const result = Astro.getActionResult(actions.settings.save);
 			<h1>Configuration</h1>
 			<a href="/admin">&larr; Volver al dashboard</a>
 		</header>
-		<AdminNav current="configuration" />
 
 		<p class="intro">
 			Estos valores definen el entorno en el que se renderiza la vista previa de cada
@@ -89,8 +87,10 @@ const result = Astro.getActionResult(actions.settings.save);
 	}
 	header {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		justify-content: space-between;
+		gap: 0.5rem 1rem;
 	}
 	header a {
 		color: #6b7280;

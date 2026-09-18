@@ -1,0 +1,292 @@
+---
+import DSLogo from '@/components/DSLogo.svg';
+import { ThemeToggle } from '@/components/starwind/theme-toggle';
+
+import {
+	NavigationMenu,
+	NavigationMenuItem,
+	NavigationMenuLink,
+	NavigationMenuList,
+	navigationMenuTriggerStyle,
+} from '@/components/starwind/navigation-menu';
+
+type Section = 'pages' | 'variables' | 'configuration';
+
+interface Props {
+	current?: Section;
+}
+
+const links: { section: Section; href: string; title: string }[] = [
+	{ section: 'pages', href: '/admin/pages', title: 'Pages' },
+	{ section: 'variables', href: '/admin/variables', title: 'Variables' },
+	{ section: 'configuration', href: '/admin/configuration', title: 'Configuration' },
+];
+
+// Derived from the URL so every admin page gets the right tab marked without
+// passing a prop; `current` stays available for pages whose path doesn't match
+// the section they belong to.
+const pathname = Astro.url.pathname;
+const current =
+	Astro.props.current ?? links.find((link) => pathname.startsWith(link.href))?.section;
+---
+
+<nav class="w-[calc(100%-1.5rem)] max-w-5xl left-0 right-0 top-3 md:top-6 mx-auto h-14 fixed z-40 bg-gray-400/10 rounded-md bg-clip-padding backdrop-filter backdrop-blur-sm py-1.5 px-3 flex items-center justify-between">
+	<a href="/admin" class="text-xl font-bold tracking-tight text-foreground transition-colors duration-200 hover:text-primary">
+		<DSLogo class="size-7 text-[#160032] dark:text-white" />
+	</a>
+
+	<div class="hidden h-full items-center md:flex">
+		<NavigationMenu aria-label="Navegación de administración">
+			<NavigationMenuList>
+				{
+					links.map((link) => (
+						<NavigationMenuItem value={link.section}>
+							<NavigationMenuLink
+								href={link.href}
+								active={current === link.section}
+								aria-current={current === link.section ? 'page' : undefined}
+								class={navigationMenuTriggerStyle()}
+							>
+								{link.title}
+							</NavigationMenuLink>
+						</NavigationMenuItem>
+					))
+				}
+			</NavigationMenuList>
+		</NavigationMenu>
+	</div>
+
+	<div class="flex items-center gap-1">
+		<ThemeToggle class="border-0 shadow-none! bg-transparent!" ariaLabel="Toggle theme" />
+
+		<button
+			type="button"
+			data-menu-open
+			aria-controls="admin-mobile-menu"
+			aria-expanded="false"
+			aria-label="Abrir navegación"
+			class="inline-flex items-center justify-center rounded-md p-2 text-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:hidden"
+		>
+			<svg class="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M4 17h16" />
+			</svg>
+		</button>
+	</div>
+</nav>
+
+<!--
+	Sibling of <nav> rather than a child: the nav's `backdrop-filter` makes it a
+	containing block for fixed-position descendants, so an overlay nested inside
+	would be clipped to the nav's 3.5rem bar instead of covering the viewport.
+-->
+<div
+	id="admin-mobile-menu"
+	data-menu-root
+	class="invisible fixed inset-0 z-50 md:hidden"
+	inert
+>
+	<!--
+		Two layers, because one solid panel the same colour as the page it covers
+		animates invisibly: `bg-background` is the exact colour of `<body>`, so a
+		black rectangle rising over black moves without a single pixel changing.
+		The coloured sheet leads and makes the sweep legible; the neutral one
+		follows and settles into the menu's actual background.
+	-->
+	<div data-menu-sweep class="absolute inset-0 bg-primary"></div>
+	<div data-menu-bg class="absolute inset-0 bg-background"></div>
+
+	<!--
+		Mirrors the nav's own box so the close icon lands where the hamburger was.
+		`z-10` is load-bearing: the link list below is `relative h-full` and comes
+		later in the DOM, so without it that full-height box paints over this one
+		and swallows every click aimed at the close button.
+	-->
+	<div class="absolute top-3 md:top-6 right-0 left-0 z-10 mx-auto flex h-14 w-[calc(100%-1.5rem)] max-w-5xl items-center justify-end px-3">
+		<button
+			type="button"
+			data-menu-close
+			aria-label="Cerrar navegación"
+			class="inline-flex items-center justify-center rounded-md p-2 text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+		>
+			<svg class="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18" />
+			</svg>
+		</button>
+	</div>
+
+	<nav aria-label="Navegación móvil de administración" class="relative flex h-full flex-col overflow-y-auto px-6 py-24">
+		<ul class="my-auto flex flex-col gap-2">
+			{
+				links.map((link) => (
+					<li>
+						{/*
+							Two elements per label on purpose: the outer one clips, the inner
+							one moves. The negative margin cancels the descender padding in
+							layout only — the clip box keeps it, so glyph tails aren't cut.
+						*/}
+						<a
+							href={link.href}
+							aria-current={current === link.section ? 'page' : undefined}
+							class="block mb-[-0.15em] overflow-hidden"
+						>
+							<span
+								data-menu-text
+								class:list={[
+									'block pb-[0.15em] text-3xl font-semibold tracking-tight',
+									current === link.section ? 'text-primary' : 'text-foreground',
+								]}
+							>
+								{link.title}
+							</span>
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</nav>
+</div>
+
+<script>
+	import { gsap } from 'gsap';
+
+	// The panel leads, the words follow out of their masks, the close icon lands
+	// last — one gesture, read top to bottom. `power3.out` on the panel and the
+	// words so both decelerate into place; the icon gets the shorter `power2.out`
+	// because it travels almost no distance and a long curve would read as lag.
+	const PANEL_DURATION = 0.6;
+	const TEXT_DURATION = 0.55;
+	const TEXT_STAGGER = 0.055;
+	const ICON_DURATION = 0.35;
+
+	// How far the coloured sheet runs ahead of the neutral one. Enough that the
+	// colour is unmistakably travelling before it gets covered, short enough that
+	// the two still read as one sheet rather than two separate panels.
+	const SWEEP_LEAD = 0.14;
+
+	// Closing is the same timeline reversed, played faster: leaving is an
+	// acknowledged decision, and replaying the full entrance backwards at entrance
+	// speed makes a dismissal feel like it's being negotiated.
+	const CLOSE_TIME_SCALE = 1.5;
+
+	const MASK_OFFSET = 115;
+
+	const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+	function setupAdminMobileMenu() {
+		const root = document.querySelector<HTMLElement>('[data-menu-root]');
+		const bg = root?.querySelector<HTMLElement>('[data-menu-bg]');
+		const sweep = root?.querySelector<HTMLElement>('[data-menu-sweep]');
+		const closeButton = root?.querySelector<HTMLElement>('[data-menu-close]');
+		const openButton = document.querySelector<HTMLElement>('[data-menu-open]');
+		if (!root || !bg || !sweep || !closeButton || !openButton) return;
+
+		const texts = gsap.utils.toArray<HTMLElement>('[data-menu-text]', root);
+		let open = false;
+
+		// Built once and replayed: rebuilding per open would re-read layout on a
+		// frame where the panel is mid-reveal, and any tween still running from a
+		// previous open would fight the new one for the same properties.
+		const timeline = gsap.timeline({
+			paused: true,
+			onReverseComplete: () => {
+				gsap.set(root, { autoAlpha: 0 });
+				gsap.set([sweep, bg, ...texts], { willChange: 'auto' });
+			},
+			onComplete: () => gsap.set([sweep, bg, ...texts], { willChange: 'auto' }),
+		});
+
+		timeline
+			.fromTo(
+				sweep,
+				{ yPercent: 100 },
+				{ yPercent: 0, duration: PANEL_DURATION, ease: 'power3.out', force3D: true },
+			)
+			// Absolute position, not relative: the neutral sheet has to start while
+			// the coloured one is still climbing, so they overlap into one sweep.
+			.fromTo(
+				bg,
+				{ yPercent: 100 },
+				{ yPercent: 0, duration: PANEL_DURATION, ease: 'power3.out', force3D: true },
+				SWEEP_LEAD,
+			)
+			// Overlapping the panel's tail rather than queueing after it: the words
+			// start while the panel is still settling, which is what makes them look
+			// carried up by it instead of arriving as a second, separate event.
+			.fromTo(
+				texts,
+				{ yPercent: MASK_OFFSET },
+				{
+					yPercent: 0,
+					duration: TEXT_DURATION,
+					ease: 'power3.out',
+					stagger: TEXT_STAGGER,
+					force3D: true,
+				},
+				`-=${PANEL_DURATION * 0.35}`,
+			)
+			.fromTo(
+				closeButton,
+				{ autoAlpha: 0, scale: 0.7 },
+				{ autoAlpha: 1, scale: 1, duration: ICON_DURATION, ease: 'power2.out' },
+				`-=${ICON_DURATION * 0.5}`,
+			);
+
+		function openMenu() {
+			if (open) return;
+			open = true;
+			openButton!.setAttribute('aria-expanded', 'true');
+			root!.removeAttribute('inert');
+			// The page behind must not scroll while the panel owns the viewport —
+			// otherwise a swipe on the overlay drags the document underneath it.
+			document.documentElement.style.overflow = 'hidden';
+
+			if (reduceMotion()) {
+				gsap.set(root!, { autoAlpha: 1 });
+				timeline.progress(1).pause();
+				closeButton!.focus();
+				return;
+			}
+
+			// Layers promoted before the first frame, not during it: asking the
+			// compositor for them mid-tween costs a frame right where the motion
+			// starts, which is the one place a hitch is visible.
+			gsap.set(root!, { autoAlpha: 1 });
+			gsap.set([sweep!, bg!, ...texts], { willChange: 'transform' });
+			timeline.timeScale(1).play();
+			closeButton!.focus();
+		}
+
+		function closeMenu() {
+			if (!open) return;
+			open = false;
+			openButton!.setAttribute('aria-expanded', 'false');
+			root!.setAttribute('inert', '');
+			document.documentElement.style.overflow = '';
+			openButton!.focus();
+
+			if (reduceMotion()) {
+				timeline.progress(0).pause();
+				gsap.set(root!, { autoAlpha: 0 });
+				return;
+			}
+
+			gsap.set([sweep!, bg!, ...texts], { willChange: 'transform' });
+			timeline.timeScale(CLOSE_TIME_SCALE).reverse();
+		}
+
+		openButton.addEventListener('click', openMenu);
+		closeButton.addEventListener('click', closeMenu);
+
+		document.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape' && open) closeMenu();
+		});
+
+		// A viewport that grows past the mobile breakpoint leaves the panel open
+		// over a desktop nav that is already usable, with its own hamburger gone.
+		window.matchMedia('(min-width: 48rem)').addEventListener('change', (event) => {
+			if (event.matches && open) closeMenu();
+		});
+	}
+
+	setupAdminMobileMenu();
+</script>

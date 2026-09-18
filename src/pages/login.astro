@@ -17,7 +17,7 @@ const errorMessages: Record<string, string> = {
 };
 ---
 
-<Layout title="Iniciar sesión">
+<Layout title="Iniciar sesión" nav={false}>
 	<main class="login">
 		<form action="/api/auth/signin" method="post">
 			<h1>Iniciar sesión</h1>
@@ -34,13 +34,20 @@ const errorMessages: Record<string, string> = {
 <style>
 	.login {
 		display: flex;
+		/* dvh, because 100vh on iOS Safari counts the address bar and pushes a
+		   vertically centred form partly under it. */
 		min-height: 100vh;
+		min-height: 100dvh;
 		align-items: center;
 		justify-content: center;
+		padding: 1.5rem 1rem;
 	}
 	form {
 		display: flex;
-		width: 320px;
+		/* A fixed 320px form has its fields touching both edges on a 320px
+		   phone. Cap it instead, and let the wrapper's padding hold the margin. */
+		width: 100%;
+		max-width: 320px;
 		flex-direction: column;
 		gap: 0.75rem;
 	}
@@ -49,6 +56,9 @@ const errorMessages: Record<string, string> = {
 		margin: 0;
 	}
 	input {
+		/* 1rem exactly: iOS Safari zooms the whole page in when a focused
+		   field's text is smaller than 16px. */
+		font-size: 1rem;
 		padding: 0.5rem;
 		border: 1px solid #ccc;
 		border-radius: 4px;
