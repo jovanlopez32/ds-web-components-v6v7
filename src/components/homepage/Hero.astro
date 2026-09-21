@@ -20,11 +20,11 @@ import PathMarqueeDemo from "./vue/PathMarqueeDemo.vue";
             <Button
                 variant="secondary"
                 size="md"
-                class="text-neutral-800"
+                class="text-neutral-800 dark:text-neutral-50"
                 href="/login"
                 >Explore Components</Button>
         </div>
 
-        <PathMarqueeDemo client:load />
+        <PathMarqueeDemo client:only="vue" />
     </div>
 </section>

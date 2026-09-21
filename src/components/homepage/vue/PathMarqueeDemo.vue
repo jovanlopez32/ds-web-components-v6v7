@@ -39,8 +39,9 @@ const images = [
 
 <template>
   <div
-    class="flex min-h-[32rem] w-full items-center justify-center overflow-hidden sm:min-h-[40rem]"
+    class="min-h-[400px] grid w-full items-end justify-center overflow-hidden mt-20 relative"
   >
+  <div class="size-40 absolute bg-linear-to-r from-neutral-50 dark:from-neutral-900 to-transparent top-50 bottom-0 m-auto z-10"></div>
     <PathMarquee
       :path="path"
       view-box="0 0 996 330"
