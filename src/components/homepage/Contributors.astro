@@ -1,0 +1,121 @@
+---
+import IconBrandGithub from "@tabler/icons/outline/brand-github.svg";
+
+import cesarRodriguez from "../contributors-avatar/cesar-rodriguez.svg?url";
+import danielMartinez from "../contributors-avatar/daniel-martinez.svg?url";
+import diegoAlva from "../contributors-avatar/diego-alva.svg?url";
+import dulceCarmona from "../contributors-avatar/dulce-carmona.svg?url";
+import javierMurillo from "../contributors-avatar/javier-murillo.svg?url";
+import jovanLopez from "../contributors-avatar/jovan-lopez.svg?url";
+import lilianaMontalvo from "../contributors-avatar/liliana-montalvo.svg?url";
+import luArvizu from "../contributors-avatar/lu-arvizu.svg?url";
+import pedroAcevedo from "../contributors-avatar/pedro-acevedo.svg?url";
+import pedroRuiz from "../contributors-avatar/pedro-ruiz.svg?url";
+import ulisesTalamantes from "../contributors-avatar/ulises-talamantes.svg?url";
+
+const contributors = [
+	{ name: "Javier Murillo", label: "javieroskar", href: "https://github.com/javieroskar", avatar: javierMurillo },
+	{ name: "Pedro Acevedo", label: "pedroAFed", href: "https://github.com/pedroAFed", avatar: pedroAcevedo },
+	{ name: "Diego Alva", label: "Nosivex", href: "https://github.com/Nosivex", avatar: diegoAlva },
+	{
+		name: "Cesar Rodriguez",
+		label: "CRodriguezgthb",
+		href: "https://github.com/CRodriguezgthb",
+		avatar: cesarRodriguez,
+	},
+	{ name: "Lu Arvizu", label: "LuArv9", href: "https://github.com/LuArv9", avatar: luArvizu },
+	{ name: "Ulises Talamante", label: "NovArce", href: "https://github.com/NovArce", avatar: ulisesTalamantes },
+	{ name: "Pedro Ruiz", label: "bingogls2", href: "https://github.com/bingogls2", avatar: pedroRuiz },
+	{ name: "Daniel Martinez", label: "danypipo", href: "https://github.com/danypipo", avatar: danielMartinez },
+	{ name: "Jovan Lopez", label: "jovanlopez32", href: "https://github.com/jovanlopez32", avatar: jovanLopez },
+	{ name: "Dulce Carmona", label: "GitHub", href: "https://github.com", avatar: dulceCarmona },
+	{ name: "Liliana Montalvo", label: "GitHub", href: "https://github.com", avatar: lilianaMontalvo },
+];
+---
+
+<section id="contributors" class="w-full pt-0 pb-20">
+	<div class="mx-auto max-w-6xl px-6">
+		<div data-reveal class="max-w-xl">
+			<h2 class="font-serif text-3xl font-bold tracking-tight text-foreground md:text-4xl">Contributors</h2>
+			<p class="mt-4 max-w-[60ch] text-base leading-relaxed text-muted-foreground">
+				The people building and maintaining this component library.
+			</p>
+		</div>
+
+		<ul class="mt-16 grid grid-cols-2 gap-x-6 gap-y-10 border-t border-border pt-10 sm:grid-cols-4">
+			{
+				contributors.map((contributor) => (
+					<li data-reveal>
+						<a
+							href={contributor.href}
+							target="_blank"
+							rel="noopener noreferrer"
+							class="group flex flex-col items-center gap-3 text-center outline-none"
+						>
+							<img
+								src={contributor.avatar}
+								alt={contributor.name}
+								width="96"
+								height="96"
+								loading="lazy"
+								class="size-20 rounded-full bg-transparent object-cover ring-1 ring-border transition-all duration-300 group-hover:bg-primary group-hover:ring-2 group-hover:ring-primary group-focus-visible:bg-primary group-focus-visible:ring-2 group-focus-visible:ring-primary motion-reduce:transition-none md:size-24"
+							/>
+							<div>
+								<p class="text-sm font-medium text-foreground">{contributor.name}</p>
+								<span class="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors group-hover:text-primary motion-reduce:transition-none">
+									<IconBrandGithub class="size-3.5" aria-hidden="true" />
+									{contributor.label}
+								</span>
+							</div>
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</div>
+</section>
+
+<script>
+	const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+	if (!reduceMotion) {
+		const items = document.querySelectorAll("#contributors [data-reveal]");
+		const observer = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (entry.isIntersecting) {
+						entry.target.classList.add("is-visible");
+						observer.unobserve(entry.target);
+					}
+				}
+			},
+			{ threshold: 0.2 },
+		);
+		items.forEach((item) => observer.observe(item));
+	} else {
+		document.querySelectorAll("#contributors [data-reveal]").forEach((item) => item.classList.add("is-visible"));
+	}
+</script>
+
+<style>
+	#contributors [data-reveal] {
+		opacity: 0;
+		transform: translateY(16px);
+		transition:
+			opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+			transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+	}
+
+	#contributors [data-reveal].is-visible {
+		opacity: 1;
+		transform: translateY(0);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		#contributors [data-reveal] {
+			opacity: 1;
+			transform: none;
+			transition: none;
+		}
+	}
+</style>

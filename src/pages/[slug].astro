@@ -31,11 +31,11 @@ const { data: components } = page
 	: { data: null };
 ---
 
-<PublicLayout title={page ? page.title : 'Página no encontrada'}>
+<PublicLayout title={page ? page.title : 'Page not found'}>
 	<main class="page">
 		{
 			!page ? (
-				<p class="page-missing">No existe ninguna página publicada en esta dirección.</p>
+				<p class="page-missing">No published page exists at this address.</p>
 			) : (
 				<>
 					<header class="page-header">
@@ -44,7 +44,7 @@ const { data: components } = page
 					</header>
 
 					{(components ?? []).length === 0 ? (
-						<p class="page-empty">Esta página todavía no tiene componentes.</p>
+						<p class="page-empty">This page doesn't have any components yet.</p>
 					) : (
 						(components ?? []).map((component) => <CodeComponent id={component.ref} />)
 					)}

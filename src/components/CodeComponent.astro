@@ -113,8 +113,8 @@ const PRESETS = [
 {
 	!component ? (
 		<p class="bg-error/10 px-4 py-3 text-sm text-error">
-			No existe ningún componente con <code>id="{id}"</code>. El número es el campo
-			<strong> Referencia</strong> que muestra el editor.
+			No component exists with <code>id="{id}"</code>. The number is the
+			<strong> Reference</strong> field shown by the editor.
 		</p>
 	) : (
 		<section class="my-8 bg-muted/40 p-4 sm:p-5" data-cc>
@@ -124,13 +124,13 @@ const PRESETS = [
 					Ref <code class="bg-muted px-1.5 py-0.5">{component.ref}</code>
 					{component.created_by_email && <> · {component.created_by_email}</>}
 					{' · '}
-					{new Date(component.updated_at).toLocaleDateString('es-MX', { dateStyle: 'medium' })}
+					{new Date(component.updated_at).toLocaleDateString('en-US', { dateStyle: 'medium' })}
 				</p>
 			</header>
 
 			{compiled?.error && (
 				<p class="mb-4 bg-error/10 px-4 py-3 text-sm text-error" role="alert">
-					El LESS de este componente no compila: {compiled.error.message}
+					This component's LESS does not compile: {compiled.error.message}
 				</p>
 			)}
 
@@ -149,7 +149,7 @@ const PRESETS = [
 								type="button"
 								class="appearance-none p-1.5 text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary data-[active=true]:bg-foreground data-[active=true]:text-background"
 								data-cc-preset={width}
-								aria-label={`Vista ${label} (${width}px)`}
+								aria-label={`${label} view (${width}px)`}
 								title={`${label} · ${width}px`}
 							>
 								<Icon class="size-4" aria-hidden="true" />
@@ -187,22 +187,22 @@ const PRESETS = [
 						this page's DOM or cookies.
 					-->
 					<!--
-						The skeleton below is retired by CSS the moment this frame reports
-						`load`. That is an inline attribute rather than a listener added by
-						the script at the bottom because that script is a module, and so
-						deferred: a preview with no remote assets to fetch can finish loading
-						before it ever runs. An attribute is bound while the parser is still
-						here, so the event can never be missed.
+						No `srcdoc` here on purpose: the moment the browser parses that
+						attribute it creates the nested document and starts fetching
+						everything the preview references (jQuery/Bootstrap from a CDN,
+						etc.), whether or not this block is on screen. A page can stack many
+						of these, so the actual markup sits inert in the <template> below
+						and the script at the bottom assigns it to the iframe only once the
+						block scrolls near the viewport.
 					-->
 					<iframe
-						title={`Ejemplo de ${component.title}`}
+						title={`Example of ${component.title}`}
 						class="block w-full"
 						style={`height: ${height}`}
 						sandbox={PREVIEW_SANDBOX}
-						srcdoc={srcDoc}
 						data-cc-iframe
-						onload="this.setAttribute('data-loaded', '')"
 					/>
+					<template data-cc-srcdoc set:html={srcDoc} />
 
 					<!--
 						Under the drawer's z-index (z-30 vs z-50) so the source can still be
@@ -238,7 +238,11 @@ const PRESETS = [
 								reason left to keep a sliver of the live preview visible
 								behind the code. It is either the preview or the source.
 							-->
-							<Drawer.Content container={`#${frameId}`} side="right" class="max-w-none">
+							<Drawer.Content
+								container={`#${frameId}`}
+								side="right"
+								class="max-w-none bg-neutral-900 text-neutral-50"
+							>
 								<div class="flex items-center justify-between gap-2 px-4 py-3">
 									<Drawer.Title data-cc-sheet-title class="text-sm font-semibold">
 										{listings[0].label}
@@ -246,20 +250,20 @@ const PRESETS = [
 									<div class="flex items-center gap-1">
 										<button
 											type="button"
-											class="appearance-none inline-flex items-center gap-1.5 px-2 py-1.5 text-background/70 outline-none transition-colors hover:bg-background/15 hover:text-background focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-background"
+											class="appearance-none inline-flex items-center gap-1.5 px-2 py-1.5 text-neutral-50/70 outline-none transition-colors hover:bg-neutral-50/15 hover:text-neutral-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-50"
 											data-cc-copy
-											title="Copiar código"
-											aria-label="Copiar código"
+											title="Copy code"
+											aria-label="Copy code"
 										>
 											<IconCopy class="size-3.5" data-cc-copy-icon aria-hidden="true" />
 											<IconCheck class="hidden size-3.5" data-cc-copy-check aria-hidden="true" />
 										</button>
 										<button
 											type="button"
-											class="appearance-none inline-flex size-7 shrink-0 items-center justify-center text-background/70 outline-none transition-colors hover:bg-background/15 hover:text-background focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-background"
+											class="appearance-none inline-flex size-7 shrink-0 items-center justify-center text-neutral-50/70 outline-none transition-colors hover:bg-neutral-50/15 hover:text-neutral-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-50"
 											data-cc-close
-											title="Cerrar"
-											aria-label="Cerrar vista de código"
+											title="Close"
+											aria-label="Close code view"
 										>
 											<IconX class="size-4" aria-hidden="true" />
 										</button>
@@ -280,8 +284,8 @@ const PRESETS = [
 				<div
 					class="hidden w-6 shrink-0 cursor-col-resize items-center justify-center bg-muted text-muted-foreground transition-colors hover:bg-primary/15 hover:text-primary active:bg-primary/20 sm:flex"
 					data-cc-handle
-					title="Arrastra para cambiar el ancho de la vista previa"
-					aria-label="Redimensionar la vista previa"
+					title="Drag to change the preview width"
+					aria-label="Resize the preview"
 					role="separator"
 					aria-orientation="vertical"
 				>
@@ -375,6 +379,10 @@ const PRESETS = [
 	const MIN_WIDTH = 320;
 	const COPY_FEEDBACK_MS = 1500;
 	const SKELETON_MAX_WAIT_MS = 8000;
+	// Starts loading a bit before the block is actually on screen, so a preview
+	// that takes a moment to fetch its remote assets is already underway by the
+	// time it scrolls fully into view instead of showing the skeleton longer.
+	const PREVIEW_ROOT_MARGIN = '400px 0px';
 
 	// Open and close are deliberate mirrors — the same curve read backwards —
 	// so the sheet leaves the way it arrived. `power3` also distributes the
@@ -541,20 +549,6 @@ const PRESETS = [
 			};
 			handle.addEventListener('pointerup', stopDrag);
 			handle.addEventListener('pointercancel', stopDrag);
-		}
-
-		// The skeleton over the example retires itself in CSS once the frame
-		// fires `load`; this is only the failsafe. A single stalled asset in the
-		// preview document would otherwise hold that event back indefinitely,
-		// leaving a placeholder on top of a component that rendered seconds ago.
-		// An unstyled example beats a skeleton that never leaves.
-		const iframe = root.querySelector<HTMLIFrameElement>('[data-cc-iframe]');
-		if (iframe && !iframe.hasAttribute('data-loaded')) {
-			const failsafe = setTimeout(
-				() => iframe.setAttribute('data-loaded', ''),
-				SKELETON_MAX_WAIT_MS,
-			);
-			iframe.addEventListener('load', () => clearTimeout(failsafe), { once: true });
 		}
 
 		const drawerRoot = root.querySelector<HTMLElement>('[data-cc-drawer]');
@@ -725,10 +719,71 @@ const PRESETS = [
 		});
 	}
 
+	/**
+	 * Moves the inert `<template>`'s markup onto the iframe and arms the same
+	 * "clear the skeleton" plumbing the eager `onload` attribute used to
+	 * provide: a `load` listener, plus a failsafe in case a stalled remote
+	 * asset in the preview holds `load` back indefinitely.
+	 */
+	function activatePreview(iframe: HTMLIFrameElement) {
+		const template = iframe.nextElementSibling;
+		if (!(template instanceof HTMLTemplateElement)) return;
+		iframe.srcdoc = template.innerHTML;
+		template.remove();
+
+		const failsafe = setTimeout(() => iframe.setAttribute('data-loaded', ''), SKELETON_MAX_WAIT_MS);
+		iframe.addEventListener(
+			'load',
+			() => {
+				clearTimeout(failsafe);
+				iframe.setAttribute('data-loaded', '');
+			},
+			{ once: true },
+		);
+	}
+
+	/**
+	 * A page can stack many `<CodeComponent />` blocks; without this every one
+	 * of their iframes would start fetching its remote assets at once. Instead
+	 * each stays inert (see the `<template>` next to it) until it scrolls near
+	 * the viewport.
+	 */
+	function lazyLoadPreviews() {
+		const frames = Array.from(
+			document.querySelectorAll<HTMLIFrameElement>('[data-cc-iframe]:not([data-cc-queued])'),
+		);
+		if (frames.length === 0) return;
+
+		if (!('IntersectionObserver' in window)) {
+			frames.forEach((iframe) => {
+				iframe.setAttribute('data-cc-queued', '');
+				activatePreview(iframe);
+			});
+			return;
+		}
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (!entry.isIntersecting) continue;
+					observer.unobserve(entry.target);
+					activatePreview(entry.target as HTMLIFrameElement);
+				}
+			},
+			{ rootMargin: PREVIEW_ROOT_MARGIN },
+		);
+
+		frames.forEach((iframe) => {
+			iframe.setAttribute('data-cc-queued', '');
+			observer.observe(iframe);
+		});
+	}
+
 	function initAll() {
 		document
 			.querySelectorAll<HTMLElement>('[data-cc]:not([data-cc-ready])')
 			.forEach(setup);
+		lazyLoadPreviews();
 	}
 
 	initAll();

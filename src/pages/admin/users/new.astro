@@ -2,6 +2,7 @@
 export const prerender = false;
 
 import Layout from '../../../layouts/AdminLayout.astro';
+import AdminPageHeader from '@/components/admin/AdminPageHeader.astro';
 import { Button } from '@/components/starwind/button';
 import { Input } from '@/components/starwind/input';
 import { Label } from '@/components/starwind/label';
@@ -9,17 +10,16 @@ import { Label } from '@/components/starwind/label';
 const error = Astro.url.searchParams.get('error');
 ---
 
-<Layout title="Crear cuenta de admin">
+<Layout title="Create admin account">
 	<main class="new-user">
-		<a href="/admin">&larr; Volver</a>
+		<AdminPageHeader title="Create admin account" backHref="/admin/users" backLabel="Back to accounts" />
 		<form action="/api/admin/create-user" method="post">
-			<h1>Crear cuenta de admin</h1>
-			{error && <p class="error">{error === 'missing_fields' ? 'Ingresa correo y contraseña.' : error}</p>}
-			<Label for="email">Correo</Label>
+			{error && <p class="error">{error === 'missing_fields' ? 'Enter email and password.' : error}</p>}
+			<Label for="email">Email</Label>
 			<Input type="email" name="email" id="email" required autocomplete="email" />
-			<Label for="password">Contraseña temporal</Label>
+			<Label for="password">Temporary password</Label>
 			<Input type="password" name="password" id="password" required minlength={8} autocomplete="new-password" />
-			<Button type="submit">Crear cuenta</Button>
+			<Button type="submit" variant="primary">Create account</Button>
 		</form>
 	</main>
 </Layout>
@@ -34,10 +34,15 @@ const error = Astro.url.searchParams.get('error');
 		display: flex;
 		flex-direction: column;
 		gap: 0.75rem;
-		margin-top: 1rem;
+		margin-top: 1.25rem;
 	}
 	.error {
-		color: #b91c1c;
 		margin: 0;
+		padding: 0.6rem 0.85rem;
+		border-radius: 4px;
+		font-size: 0.875rem;
+		color: var(--foreground);
+		background: color-mix(in oklch, var(--error), transparent 90%);
+		border: 1px solid color-mix(in oklch, var(--error), transparent 60%);
 	}
 </style>

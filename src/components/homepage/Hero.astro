@@ -4,12 +4,12 @@ import Button from "../starwind/button/Button.astro";
 import PathMarqueeDemo from "./vue/PathMarqueeDemo.vue";
 ---
 
- <section class="w-full grid place-items-center my-40">
-    <div class="flex flex-col items-center gap-4  ">
+ <section class="w-full mt-10 mb-20 px-4">
+    <div class="mx-auto flex w-full max-w-3xl min-w-0 flex-col items-center gap-4">
         <DSLogo class="w-40 text-neutral-600 dark:text-neutral-50" />
-        <h1 class="mt-8 text-4xl lg:text-5xl font-bold font-serif text-neutral-900 dark:text-neutral-50">Library of reusable components</h1>
+        <h1 class="mt-8 text-4xl lg:text-5xl font-bold font-serif text-neutral-900 dark:text-neutral-50 text-center">Library of reusable components</h1>
         <p class="text-neutral-700 dark:text-neutral-300">v6v7</p>
-        <div class="flex gap-4 mt-8">
+        <div class="flex flex-wrap justify-center gap-4 mt-8">
             <Button
                 variant="primary"
                 size="md"
@@ -24,7 +24,7 @@ import PathMarqueeDemo from "./vue/PathMarqueeDemo.vue";
                 href="/login"
                 >Explore Components</Button>
         </div>
-
-        <PathMarqueeDemo client:only="vue" />
     </div>
+
+    <PathMarqueeDemo client:only="vue" />
 </section>

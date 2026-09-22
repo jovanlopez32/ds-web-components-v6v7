@@ -50,22 +50,22 @@ export default function VariablesPanel({
 	return (
 		<section className="variables-panel">
 			<div className="variables-header">
-				<h3>Variables de este componente</h3>
+				<h3>This component's variables</h3>
 				<button type="button" className={button({ variant: 'outline', size: 'sm' })} onClick={() => add()}>
-					Agregar
+					Add
 				</button>
 			</div>
 
 			<p className="variables-help">
-				Sustituyen las variables ASP solo en la vista previa, y ganan sobre las globales.
-				No forman parte del código que se publica.
+				These override ASP variables only in the preview, and take precedence over the
+				globals. They are not part of the published code.
 			</p>
 
 			{missing.length > 0 && (
 				<div className="variables-missing">
 					<p>
-						Tu ASP usa estas variables y no están definidas ni aquí ni en las globales.
-						Se renderizan vacías, igual que en ASP:
+						Your ASP code uses these variables, and they aren't defined here or in the
+						globals. They render empty, just like in ASP:
 					</p>
 					<ul>
 						{missing.map((name) => (
@@ -76,7 +76,7 @@ export default function VariablesPanel({
 									className={button({ variant: 'ghost', size: 'sm' })}
 									onClick={() => add(name)}
 								>
-									Definir
+									Define
 								</button>
 							</li>
 						))}
@@ -84,7 +84,7 @@ export default function VariablesPanel({
 				</div>
 			)}
 
-			{entries.length === 0 && <p className="variables-empty">Sin variables propias.</p>}
+			{entries.length === 0 && <p className="variables-empty">No component-specific variables.</p>}
 
 			{entries.map(([name, value], index) => (
 				// Index-keyed on purpose: the name is the editable field, so
@@ -94,7 +94,7 @@ export default function VariablesPanel({
 					<input
 						type="text"
 						className={input({ size: 'sm' })}
-						aria-label="Nombre"
+						aria-label="Name"
 						placeholder="TXT_IMG_PATH"
 						value={name}
 						onChange={(event) => rename(name, event.target.value)}
@@ -102,15 +102,15 @@ export default function VariablesPanel({
 					<input
 						type="text"
 						className={input({ size: 'sm' })}
-						aria-label="Valor"
-						placeholder="valor"
+						aria-label="Value"
+						placeholder="value"
 						value={value}
 						onChange={(event) => setValue(name, event.target.value)}
 					/>
 					<button
 						type="button"
 						className={`${button({ variant: 'ghost', size: 'icon-sm' })} variables-remove`}
-						aria-label={`Quitar ${name}`}
+						aria-label={`Remove ${name}`}
 						onClick={() => remove(name)}
 					>
 						&times;
@@ -120,16 +120,16 @@ export default function VariablesPanel({
 
 			{inheritedNames.length > 0 && (
 				<details className="variables-global">
-					<summary>Globales heredadas ({inheritedNames.length})</summary>
+					<summary>Inherited globals ({inheritedNames.length})</summary>
 					<ul>
 						{inheritedNames.map((name) => (
 							<li key={name}>
 								<code>{name}</code>
-								<span>{globalVariables[name] || <em>(vacío)</em>}</span>
+								<span>{globalVariables[name] || <em>(empty)</em>}</span>
 							</li>
 						))}
 					</ul>
-					<a href="/admin/variables">Editar variables globales</a>
+					<a href="/admin/variables">Edit global variables</a>
 				</details>
 			)}
 		</section>

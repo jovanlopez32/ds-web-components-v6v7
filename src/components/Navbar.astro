@@ -32,7 +32,7 @@ const getChildren = (parentId: string) => {
 	</a>
 
 	<div class="hidden h-full items-center md:flex">
-		<NavigationMenu aria-label="Navegación principal">
+		<NavigationMenu aria-label="Main navigation">
 			<NavigationMenuList>
 				{
 					topLevel.map((page) => {
@@ -86,7 +86,7 @@ const getChildren = (parentId: string) => {
 			data-menu-open
 			aria-controls="mobile-menu"
 			aria-expanded="false"
-			aria-label="Abrir navegación"
+			aria-label="Open navigation"
 			class="inline-flex items-center justify-center rounded-md p-2 text-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:hidden"
 		>
 			<svg class="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -128,7 +128,7 @@ const getChildren = (parentId: string) => {
 		<button
 			type="button"
 			data-menu-close
-			aria-label="Cerrar navegación"
+			aria-label="Close navigation"
 			class="inline-flex items-center justify-center rounded-md p-2 text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
 		>
 			<svg class="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -137,7 +137,7 @@ const getChildren = (parentId: string) => {
 		</button>
 	</div>
 
-	<nav aria-label="Navegación móvil" class="relative flex h-full flex-col overflow-y-auto px-6 py-24">
+	<nav aria-label="Mobile navigation" class="relative flex h-full flex-col overflow-y-auto px-6 py-24">
 		<ul class="my-auto flex flex-col gap-2">
 			{
 				topLevel.map((page) => {

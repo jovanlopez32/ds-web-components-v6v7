@@ -39,9 +39,10 @@ const images = [
 
 <template>
   <div
-    class="min-h-[400px] grid w-full items-end justify-center overflow-hidden mt-20 relative"
+    class="min-h-[400px] grid w-full min-w-0 items-end justify-center overflow-hidden mt-20 relative hidden md:grid lg:"
   >
-  <div class="size-40 absolute bg-linear-to-r from-neutral-50 dark:from-neutral-900 to-transparent top-50 bottom-0 m-auto z-10"></div>
+    <div class="size-40 absolute bg-linear-to-r from-neutral-50 via-neutral-50 dark:via-neutral-900 dark:from-neutral-900 to-transparent top-30 bottom-0 m-auto z-10 left-0 2xl:left-40"></div>
+    <div class="size-40 absolute bg-linear-to-l from-neutral-50 via-neutral-50 dark:via-neutral-900 dark:from-neutral-900 to-transparent top-0 bottom-0 m-auto z-10 right-0 2xl:right-40"></div>
     <PathMarquee
       :path="path"
       view-box="0 0 996 330"
@@ -52,7 +53,7 @@ const images = [
       :drag-sensitivity="props.dragSensitivity"
       responsive
       grab-cursor
-      class="h-full w-full scale-105"
+      class="h-full w-full min-w-0 scale-105"
     >
       <div
         v-for="(image, index) in images"

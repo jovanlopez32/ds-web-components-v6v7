@@ -1,0 +1,157 @@
+---
+import IconPuzzle2 from "@tabler/icons/outline/puzzle-2.svg";
+import IconAdjustmentsHorizontal from "@tabler/icons/outline/adjustments-horizontal.svg";
+import IconDatabase from "@tabler/icons/outline/database.svg";
+import IconCopy from "@tabler/icons/outline/copy.svg";
+import IconCheck from "@tabler/icons/outline/check.svg";
+
+const snippet = `---\nimport CodeComponent from '../components/CodeComponent.astro';\n---\n\n<CodeComponent id="12" />`;
+---
+
+<section id="customizable" class="w-full mt-10 mb-20">
+	<div class="mx-auto max-w-6xl px-6">
+		<div data-reveal class="max-w-xl">
+			<h2 class="font-serif text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+				Bring it into your own page
+			</h2>
+			<p class="mt-4 max-w-[60ch] text-base leading-relaxed text-muted-foreground">
+				Every stored component doubles as a drop-in tag. Import it into any hand-written Astro page and it
+				renders live — fully customizable to fit exactly where you put it.
+			</p>
+		</div>
+
+		<div class="mt-16 grid grid-cols-1 gap-12 border-t border-border pt-10 lg:grid-cols-2 lg:gap-16">
+			<div data-reveal class="flex flex-col divide-y divide-border">
+				<div class="flex gap-4 pb-6">
+					<IconPuzzle2 class="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
+					<div>
+						<h3 class="text-base font-semibold text-foreground">One tag, one ref</h3>
+						<p class="mt-1.5 max-w-[46ch] text-sm leading-relaxed text-muted-foreground">
+							Import <code class="bg-muted px-1.5 py-0.5 text-foreground">&lt;CodeComponent /&gt;</code>
+							into any Astro file and pass the number shown in the editor. The live example and its
+							exact ASP, LESS, and JS source appear right there.
+						</p>
+					</div>
+				</div>
+
+				<div class="flex gap-4 py-6">
+					<IconAdjustmentsHorizontal class="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
+					<div>
+						<h3 class="text-base font-semibold text-foreground">Tuned per instance</h3>
+						<p class="mt-1.5 max-w-[46ch] text-sm leading-relaxed text-muted-foreground">
+							Two optional props — <code class="bg-muted px-1.5 py-0.5 text-foreground">showCode</code>
+							and <code class="bg-muted px-1.5 py-0.5 text-foreground">height</code> — so the same
+							component can look completely different on every page that embeds it.
+						</p>
+					</div>
+				</div>
+
+				<div class="flex gap-4 pt-6">
+					<IconDatabase class="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
+					<div>
+						<h3 class="text-base font-semibold text-foreground">Never out of sync</h3>
+						<p class="mt-1.5 max-w-[46ch] text-sm leading-relaxed text-muted-foreground">
+							It reads straight from the same database <code class="bg-muted px-1.5 py-0.5 text-foreground"
+								>/admin</code
+							> edits. Update the component once, and every page using it updates instantly.
+						</p>
+					</div>
+				</div>
+			</div>
+
+			<div data-reveal class="bg-neutral-900 p-5 sm:p-6">
+				<div class="mb-4 flex items-center justify-between gap-3">
+					<span class="inline-flex items-center gap-1.5 bg-neutral-50/10 px-2.5 py-1 text-xs font-medium text-neutral-50/70">
+						custom-page.astro
+					</span>
+					<button
+						type="button"
+						data-copy-embed-trigger
+						data-copy-text={snippet}
+						class="inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-neutral-50/70 outline-none transition-colors hover:bg-neutral-50/15 hover:text-neutral-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-50 motion-reduce:transition-none"
+					>
+						<IconCopy data-copy-embed-icon class="size-3.5" aria-hidden="true" />
+						<IconCheck data-copy-embed-check class="hidden size-3.5" aria-hidden="true" />
+						<span data-copy-embed-label>Copy</span>
+					</button>
+				</div>
+
+				<pre
+					class="overflow-x-auto font-mono text-[13px] leading-relaxed text-neutral-400"><code>---
+import CodeComponent from <span class="text-neutral-100">'../components/CodeComponent.astro'</span>;
+---
+
+&lt;<span class="text-neutral-100">CodeComponent</span> id=<span class="text-neutral-100">"12"</span> /&gt;</code></pre>
+			</div>
+		</div>
+	</div>
+</section>
+
+<script>
+	const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+	if (!reduceMotion) {
+		const items = document.querySelectorAll("#customizable [data-reveal]");
+		const observer = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (entry.isIntersecting) {
+						entry.target.classList.add("is-visible");
+						observer.unobserve(entry.target);
+					}
+				}
+			},
+			{ threshold: 0.2 },
+		);
+		items.forEach((item) => observer.observe(item));
+	} else {
+		document.querySelectorAll("#customizable [data-reveal]").forEach((item) => item.classList.add("is-visible"));
+	}
+
+	document.querySelectorAll<HTMLButtonElement>("[data-copy-embed-trigger]").forEach((button) => {
+		button.addEventListener("click", async () => {
+			const text = button.getAttribute("data-copy-text") ?? "";
+			try {
+				await navigator.clipboard.writeText(text);
+			} catch {
+				return;
+			}
+
+			const icon = button.querySelector("[data-copy-embed-icon]");
+			const check = button.querySelector("[data-copy-embed-check]");
+			const label = button.querySelector("[data-copy-embed-label]");
+			icon?.classList.add("hidden");
+			check?.classList.remove("hidden");
+			if (label) label.textContent = "Copied";
+
+			window.setTimeout(() => {
+				icon?.classList.remove("hidden");
+				check?.classList.add("hidden");
+				if (label) label.textContent = "Copy";
+			}, 1500);
+		});
+	});
+</script>
+
+<style>
+	#customizable [data-reveal] {
+		opacity: 0;
+		transform: translateY(16px);
+		transition:
+			opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+			transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+	}
+
+	#customizable [data-reveal].is-visible {
+		opacity: 1;
+		transform: translateY(0);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		#customizable [data-reveal] {
+			opacity: 1;
+			transform: none;
+			transition: none;
+		}
+	}
+</style>

@@ -1,13 +1,18 @@
 ---
 import Layout from '../layouts/PublicLayout.astro';
 import Hero from '../components/homepage/Hero.astro';
+import HowItWorks from '../components/homepage/HowItWorks.astro';
+import Customizable from '../components/homepage/Customizable.astro';
+import Contributors from '../components/homepage/Contributors.astro';
 ---
 
 <Layout title="LeadVenture">
 
-   
+
     <Hero />
-    <div class="fixed inset-0 -z-10 h-full w-full bg-neutral-50 dark:bg-neutral-900 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-size-[14px_24px]"></div>
+    <HowItWorks />
+    <Customizable />
+    <Contributors />
 </Layout>
 
 

@@ -3,6 +3,7 @@ export const prerender = false;
 
 import { actions } from 'astro:actions';
 import Layout from '../../../layouts/AdminLayout.astro';
+import AdminPageHeader from '@/components/admin/AdminPageHeader.astro';
 import { createUserClient } from '../../../lib/supabase';
 import { Button } from '@/components/starwind/button';
 
@@ -36,27 +37,23 @@ const errorCode = Astro.url.searchParams.get('error');
 
 <Layout title={`Page: ${page.title}`}>
 	<main class="page-detail">
-		<header>
-			<h1>{page.title}</h1>
-			<a href="/admin/pages">&larr; Volver a Pages</a>
-		</header>
+		<AdminPageHeader title={page.title} backHref="/admin/pages" backLabel="Back to Pages" description={page.description} />
 
-		<p class="slug">Pública: <a href={`/${page.slug}`} target="_blank">/{page.slug}</a></p>
-		{page.description && <p>{page.description}</p>}
+		<p class="slug">Public: <a href={`/${page.slug}`} target="_blank">/{page.slug}</a></p>
 
-		{errorCode && <p class="error">Ocurrió un error, intenta de nuevo.</p>}
+		{errorCode && <p class="error">An error occurred, please try again.</p>}
 
 		<div class="components-header">
-			<h2>Componentes</h2>
-			<Button as="a" href={`/admin/pages/${page.admin_slug}/components/new`} size="sm">Nuevo componente</Button>
+			<h2>Components</h2>
+			<Button as="a" href={`/admin/pages/${page.admin_slug}/components/new`} size="sm">New component</Button>
 		</div>
 
-		{components && components.length === 0 && <p>Todavía no hay componentes.</p>}
+		{components && components.length === 0 && <p>No components yet.</p>}
 
 		<ul class="component-list">
 			{components?.map((component) => (
 				<li data-id={component.id}>
-					<span class="drag-handle" title="Arrastrar para reordenar">
+					<span class="drag-handle" title="Drag to reorder">
 						<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
 							<circle cx="9" cy="6" r="1.5" /><circle cx="15" cy="6" r="1.5" />
 							<circle cx="9" cy="12" r="1.5" /><circle cx="15" cy="12" r="1.5" />
@@ -69,13 +66,13 @@ const errorCode = Astro.url.searchParams.get('error');
 							<code>&lt;CodeComponent id="{component.ref}" /&gt;</code>
 							{component.created_by_email && <> · {component.created_by_email}</>}
 							{' · '}
-							{new Date(component.updated_at).toLocaleDateString('es-MX', {
+							{new Date(component.updated_at).toLocaleDateString('en-US', {
 								dateStyle: 'medium',
 							})}
 						</span>
 					</div>
 					<div class="actions">
-						<a href={`/admin/pages/${page.admin_slug}/components/${component.id}`}>Editar</a>
+						<a href={`/admin/pages/${page.admin_slug}/components/${component.id}`}>Edit</a>
 						<!--
 							Posts straight to the action, so this delete keeps
 							working with JavaScript disabled. The editor island
@@ -84,10 +81,10 @@ const errorCode = Astro.url.searchParams.get('error');
 						<form
 							method="POST"
 							action={actions.components.remove}
-							onsubmit="return confirm('¿Eliminar este componente?')"
+							onsubmit="return confirm('Delete this component?')"
 						>
 							<input type="hidden" name="id" value={component.id} />
-							<Button type="submit" variant="error" size="sm">Eliminar</Button>
+							<Button type="submit" variant="error" size="sm">Delete</Button>
 						</form>
 					</div>
 				</li>
@@ -109,7 +106,7 @@ const errorCode = Astro.url.searchParams.get('error');
 				const ids = Array.from(list.children).map((li) => (li as HTMLElement).dataset.id!);
 				const { error } = await actions.components.reorder({ ids });
 				if (error) {
-					alert('No se pudo guardar el nuevo orden.');
+					alert('Could not save the new order.');
 					location.reload();
 				}
 			},
@@ -123,18 +120,25 @@ const errorCode = Astro.url.searchParams.get('error');
 		margin: 2rem auto;
 		padding: 0 1rem;
 	}
-	header {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		justify-content: space-between;
-		gap: 0.5rem 1rem;
+	.slug {
+		margin-top: 0.75rem;
+		color: var(--muted-foreground);
 	}
 	.slug a {
-		color: #6b7280;
+		color: var(--muted-foreground);
+		text-decoration-color: color-mix(in oklch, var(--muted-foreground), transparent 60%);
+	}
+	.slug a:hover {
+		color: var(--foreground);
 	}
 	.error {
-		color: #b91c1c;
+		margin-top: 1rem;
+		padding: 0.6rem 0.85rem;
+		border-radius: 4px;
+		font-size: 0.875rem;
+		color: var(--foreground);
+		background: color-mix(in oklch, var(--error), transparent 90%);
+		border: 1px solid color-mix(in oklch, var(--error), transparent 60%);
 	}
 	.components-header {
 		display: flex;
@@ -152,7 +156,7 @@ const errorCode = Astro.url.searchParams.get('error');
 		flex-direction: column;
 		gap: 0.6rem;
 	}
-	/* Wraps on a phone: Editar plus Eliminar take 130px of a 326px row, which
+	/* Wraps on a phone: Edit plus Delete take 130px of a 326px row, which
 	   leaves the title and its <CodeComponent> snippet fighting over what is
 	   left. Below sm the actions drop onto their own full-width line instead. */
 	.component-list li {
@@ -161,13 +165,13 @@ const errorCode = Astro.url.searchParams.get('error');
 		align-items: flex-start;
 		gap: 0.75rem 1rem;
 		padding: 0.6rem 1rem;
-		border: 1px solid #e5e7eb;
+		border: 1px solid var(--border);
 		border-radius: 6px;
 	}
 	.drag-handle {
 		display: flex;
 		flex-shrink: 0;
-		color: #9ca3af;
+		color: var(--muted-foreground);
 		cursor: grab;
 		touch-action: none;
 	}
@@ -178,7 +182,7 @@ const errorCode = Astro.url.searchParams.get('error');
 		opacity: 0.4;
 	}
 	.sortable-drag {
-		background: #f9fafb;
+		background: var(--muted);
 	}
 	.component-info {
 		display: flex;
@@ -191,13 +195,14 @@ const errorCode = Astro.url.searchParams.get('error');
 		font-weight: 600;
 	}
 	.component-meta {
-		color: #6b7280;
+		color: var(--muted-foreground);
 		font-size: 0.75rem;
 		overflow-wrap: anywhere;
 	}
 	.component-meta code {
 		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-		background: #f3f4f6;
+		background: var(--muted);
+		color: var(--foreground);
 		border-radius: 3px;
 		padding: 0.05rem 0.3rem;
 	}
@@ -221,6 +226,9 @@ const errorCode = Astro.url.searchParams.get('error');
 		display: inline;
 	}
 	.actions a {
-		color: #111827;
+		color: var(--foreground);
+	}
+	.actions a:hover {
+		color: var(--primary);
 	}
 </style>

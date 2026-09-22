@@ -11,7 +11,7 @@ import type { CompileError } from '../../lib/less-server';
 import { button } from '@/components/starwind/button/variants';
 
 /**
- * The code as it was when the author last pressed Compilar.
+ * The code as it was when the author last pressed Compile.
  *
  * The preview renders this, never the live editor state. Compiling is a server
  * round trip that can fail, so rebuilding on every keystroke meant errors
@@ -40,8 +40,8 @@ interface Props {
 const REGION_LABELS: Record<string, string> = {
 	less: 'LESS',
 	mixins: 'Mixins',
-	'site-variables': 'Variables del sitio',
-	platform: 'Plataforma',
+	'site-variables': 'Site variables',
+	platform: 'Platform',
 };
 
 export default function ComponentPreview({
@@ -126,7 +126,7 @@ export default function ComponentPreview({
 			if (!isPreviewErrorMessage(event.data)) return;
 
 			setRuntimeError(
-				event.data.line ? `${event.data.message} (línea ${event.data.line})` : event.data.message,
+				event.data.line ? `${event.data.message} (line ${event.data.line})` : event.data.message,
 			);
 		}
 
@@ -137,10 +137,10 @@ export default function ComponentPreview({
 	return (
 		<div className="preview">
 			<div className="preview-header">
-				<h2>Vista previa</h2>
+				<h2>Preview</h2>
 				<div className="preview-controls">
 					{snapshot !== null && isStale && (
-						<span className="preview-stale">Código cambiado</span>
+						<span className="preview-stale">Code changed</span>
 					)}
 					<button
 						type="button"
@@ -148,7 +148,7 @@ export default function ComponentPreview({
 						onClick={onCompile}
 						disabled={isCompiling}
 					>
-						{isCompiling ? 'Compilando…' : 'Compilar'}
+						{isCompiling ? 'Compiling…' : 'Compile'}
 					</button>
 				</div>
 			</div>
@@ -157,7 +157,7 @@ export default function ComponentPreview({
 				<p className="preview-error" role="alert">
 					<strong>{REGION_LABELS[lessError.region ?? 'less'] ?? 'LESS'}:</strong>{' '}
 					{lessError.message}
-					{lessError.line !== null && ` (línea ${lessError.line})`}
+					{lessError.line !== null && ` (line ${lessError.line})`}
 				</p>
 			)}
 
@@ -169,19 +169,19 @@ export default function ComponentPreview({
 
 			{placeholders.length > 0 && (
 				<p className="preview-note">
-					Funciones ASP mostradas como marcador:{' '}
+					ASP functions shown as placeholder:{' '}
 					{placeholders.map((name) => `[${name}]`).join(', ')}
 				</p>
 			)}
 
 			{snapshot === null ? (
 				<p className="preview-empty">
-					Presiona <strong>Compilar</strong> para ver el componente.
+					Press <strong>Compile</strong> to view the component.
 				</p>
 			) : (
 				<iframe
 					ref={iframeRef}
-					title="Vista previa del componente"
+					title="Component preview"
 					className="preview-frame"
 					sandbox={PREVIEW_SANDBOX}
 					srcDoc={srcDoc}

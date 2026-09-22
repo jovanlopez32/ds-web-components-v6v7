@@ -28,5 +28,5 @@ export const POST: APIRoute = async ({ request, redirect, locals }) => {
 		return redirect(`/admin/users/new?error=${encodeURIComponent(error.message)}`);
 	}
 
-	return redirect('/admin?created=1');
+	return redirect('/admin/users?created=1');
 };

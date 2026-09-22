@@ -1,0 +1,188 @@
+---
+export const prerender = false;
+
+import { actions, isInputError } from 'astro:actions';
+import Layout from '../../../layouts/AdminLayout.astro';
+import AdminPageHeader from '@/components/admin/AdminPageHeader.astro';
+import { supabaseAdmin } from '../../../lib/supabase-admin';
+import { Button } from '@/components/starwind/button';
+import { Input } from '@/components/starwind/input';
+import { Label } from '@/components/starwind/label';
+import {
+	AlertDialog,
+	AlertDialogTrigger,
+	AlertDialogContent,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogFooter,
+	AlertDialogCancel,
+	AlertDialogAction,
+} from '@/components/starwind/alert-dialog';
+import IconPlus from '@tabler/icons/outline/plus.svg';
+import IconTrash from '@tabler/icons/outline/trash.svg';
+import IconKey from '@tabler/icons/outline/key.svg';
+import IconUsers from '@tabler/icons/outline/users.svg';
+import IconCircleCheck from '@tabler/icons/outline/circle-check.svg';
+
+const currentUserId = Astro.locals.user!.id;
+
+// Needs the secret key: there is no RLS-safe way to list, delete, or update
+// auth.users from the client's own session.
+const { data, error } = await supabaseAdmin.auth.admin.listUsers();
+const users = (data?.users ?? []).sort(
+	(a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+);
+
+const removeResult = Astro.getActionResult(actions.users.remove);
+const updatePasswordResult = Astro.getActionResult(actions.users.updatePassword);
+const passwordErrors = isInputError(updatePasswordResult?.error) ? updatePasswordResult.error.fields : {};
+const justCreated = Astro.url.searchParams.get('created') === '1';
+
+const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
+---
+
+<Layout title="Admin accounts">
+	<main class="mx-auto w-full max-w-3xl px-4 pb-20 sm:px-6">
+		<AdminPageHeader
+			title="Admin accounts"
+			backHref="/admin"
+			description={`${plural(users.length, 'account', 'accounts')} can sign in to /admin.`}
+		>
+			<Button slot="actions" as="a" href="/admin/users/new" size="sm">
+				<IconPlus class="size-4" aria-hidden="true" />
+				New admin account
+			</Button>
+		</AdminPageHeader>
+
+		{justCreated && (
+			<p class="mt-6 flex items-center gap-2 border border-success/40 bg-success/10 px-4 py-3 text-sm text-foreground">
+				<IconCircleCheck class="size-4 shrink-0 text-success" aria-hidden="true" />
+				Admin account created.
+			</p>
+		)}
+
+		{error && (
+			<p class="mt-6 border border-error/40 bg-error/10 px-4 py-3 text-sm text-foreground">
+				Could not load admin accounts.
+			</p>
+		)}
+		{removeResult?.error && (
+			<p class="mt-6 border border-error/40 bg-error/10 px-4 py-3 text-sm text-foreground">
+				{removeResult.error.message}
+			</p>
+		)}
+		{updatePasswordResult?.error && (
+			<p class="mt-6 border border-error/40 bg-error/10 px-4 py-3 text-sm text-foreground">
+				{Object.keys(passwordErrors).length > 0
+					? Object.values(passwordErrors).flat().join(' ')
+					: updatePasswordResult.error.message}
+			</p>
+		)}
+
+		{users.length === 0 && !error && (
+			<div class="mt-8 flex flex-col items-center gap-3 rounded-lg border border-dashed border-border px-6 py-12 text-center">
+				<IconUsers class="size-8 text-muted-foreground" aria-hidden="true" />
+				<p class="text-base font-medium text-foreground">No admin accounts yet</p>
+				<p class="max-w-[40ch] text-sm text-muted-foreground">
+					Create the first one so someone can sign in to /admin.
+				</p>
+			</div>
+		)}
+
+		<ul class="mt-8 flex flex-col gap-3">
+			{users.map((account) => {
+				const isSelf = account.id === currentUserId;
+
+				return (
+					<li class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-4">
+						<div class="min-w-0">
+							<p class="truncate text-sm font-medium text-foreground">
+								{account.email}
+								{isSelf && <span class="ml-2 text-xs font-normal text-muted-foreground">(you)</span>}
+							</p>
+							<p class="mt-1 text-xs text-muted-foreground">
+								Created {new Date(account.created_at).toLocaleDateString('en-US', { dateStyle: 'medium' })}
+								{account.last_sign_in_at && (
+									<>
+										{' · '}Last signed in{' '}
+										{new Date(account.last_sign_in_at).toLocaleDateString('en-US', { dateStyle: 'medium' })}
+									</>
+								)}
+							</p>
+						</div>
+
+						<div class="flex shrink-0 items-center gap-2">
+							<AlertDialog>
+								<AlertDialogTrigger asChild>
+									<Button
+										type="button"
+										variant="outline"
+										size="icon-sm"
+										title="Change password"
+										aria-label={`Change password for ${account.email}`}
+									>
+										<IconKey class="size-4" aria-hidden="true" />
+									</Button>
+								</AlertDialogTrigger>
+
+								<AlertDialogContent>
+									<form method="POST" action={actions.users.updatePassword}>
+										<AlertDialogHeader>
+											<AlertDialogTitle>Change password</AlertDialogTitle>
+										</AlertDialogHeader>
+
+										<div class="mt-5 flex flex-col gap-2">
+											<Label for={`password-${account.id}`}>New password for {account.email}</Label>
+											<input type="hidden" name="id" value={account.id} />
+											<Input
+												type="password"
+												name="password"
+												id={`password-${account.id}`}
+												required
+												minlength={8}
+												autocomplete="new-password"
+											/>
+										</div>
+
+										<AlertDialogFooter class="mt-6">
+											<AlertDialogCancel>Cancel</AlertDialogCancel>
+											<AlertDialogAction type="submit">Save</AlertDialogAction>
+										</AlertDialogFooter>
+									</form>
+								</AlertDialogContent>
+							</AlertDialog>
+
+							<form
+								method="POST"
+								action={actions.users.remove}
+								data-confirm={`Delete ${account.email}? They will no longer be able to sign in.`}
+							>
+								<input type="hidden" name="id" value={account.id} />
+								<Button
+									type="submit"
+									variant="error"
+									size="icon-sm"
+									title={isSelf ? "You can't delete your own account" : 'Delete account'}
+									aria-label={`Delete ${account.email}`}
+									disabled={isSelf}
+								>
+									<IconTrash class="size-4" aria-hidden="true" />
+								</Button>
+							</form>
+						</div>
+					</li>
+				);
+			})}
+		</ul>
+	</main>
+</Layout>
+
+<script>
+	// The delete forms post straight to the action, so they keep working
+	// without JavaScript — this only adds the confirmation step when available.
+	document.querySelectorAll<HTMLFormElement>('form[data-confirm]').forEach((form) => {
+		form.addEventListener('submit', (event) => {
+			if (!confirm(form.dataset.confirm!)) event.preventDefault();
+		});
+	});
+</script>

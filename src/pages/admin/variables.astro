@@ -3,6 +3,7 @@ export const prerender = false;
 
 import { actions } from 'astro:actions';
 import Layout from '../../layouts/AdminLayout.astro';
+import AdminPageHeader from '@/components/admin/AdminPageHeader.astro';
 import { createUserClient } from '../../lib/supabase';
 import { Button } from '@/components/starwind/button';
 import { Input } from '@/components/starwind/input';
@@ -26,25 +27,22 @@ const { data: variables } = await db
 const saveResult = Astro.getActionResult(actions.variables.save);
 ---
 
-<Layout title="Variables globales">
+<Layout title="Global variables">
 	<main class="admin">
-		<header>
-			<h1>Variables globales</h1>
-			<a href="/admin">&larr; Volver al dashboard</a>
-		</header>
+		<AdminPageHeader title="Global variables" backHref="/admin" />
 
 		<p class="intro">
-			Sustituyen las expresiones ASP <code>&lt;%=NOMBRE%&gt;</code> en la vista previa, para
-			poder ver un componente fuera de la plataforma real. Cada componente puede además
-			definir las suyas, y esas ganan sobre estas.
+			These replace ASP expressions <code>&lt;%=NAME%&gt;</code> in the preview, so a
+			component can be viewed outside the real platform. Each component can also
+			define its own, which take precedence over these.
 		</p>
 
 		{saveResult?.error && <p class="error">{saveResult.error.message}</p>}
-		{saveResult && !saveResult.error && <p class="ok">Variable guardada.</p>}
+		{saveResult && !saveResult.error && <p class="ok">Variable saved.</p>}
 
 		<form method="POST" action={actions.variables.save} class="new-variable">
 			<div>
-				<Label for="name">Nombre</Label>
+				<Label for="name">Name</Label>
 				<Input
 					type="text"
 					id="name"
@@ -56,23 +54,23 @@ const saveResult = Astro.getActionResult(actions.variables.save);
 				/>
 			</div>
 			<div>
-				<Label for="value">Valor</Label>
+				<Label for="value">Value</Label>
 				<Input type="text" id="value" name="value" placeholder="/images/" size="sm" />
 			</div>
-			<Button type="submit" size="sm">Agregar</Button>
+			<Button type="submit" variant="primary" size="sm">Add</Button>
 		</form>
 
 		{variables && variables.length === 0 && (
 			<p class="empty">
-				Todavía no hay variables. Agrega las que use tu ASP, por ejemplo
-				<code>TXT_IMG_PATH</code> o <code>TXT_SEO_LOCATION</code>.
+				No variables yet. Add the ones your ASP code uses, for example
+				<code>TXT_IMG_PATH</code> or <code>TXT_SEO_LOCATION</code>.
 			</p>
 		)}
 
 		<ul class="variable-list">
 			{variables?.map((variable) => (
 				<li>
-					{/* Each row is its own form so a single Guardar updates just that variable. */}
+					{/* Each row is its own form so a single Save updates just that variable. */}
 					<form method="POST" action={actions.variables.save}>
 						<input type="hidden" name="id" value={variable.id} />
 						<Input
@@ -81,19 +79,19 @@ const saveResult = Astro.getActionResult(actions.variables.save);
 							value={variable.name}
 							required
 							pattern="[A-Za-z_][A-Za-z0-9_]*"
-							aria-label="Nombre"
+							aria-label="Name"
 							size="sm"
 						/>
-						<Input type="text" name="value" value={variable.value} aria-label="Valor" size="sm" />
-						<Button type="submit" size="sm">Guardar</Button>
+						<Input type="text" name="value" value={variable.value} aria-label="Value" size="sm" />
+						<Button type="submit" size="sm">Save</Button>
 					</form>
 					<form
 						method="POST"
 						action={actions.variables.remove}
-						onsubmit="return confirm('¿Eliminar esta variable?')"
+						onsubmit="return confirm('Delete this variable?')"
 					>
 						<input type="hidden" name="id" value={variable.id} />
-						<Button type="submit" variant="error" size="sm">Eliminar</Button>
+						<Button type="submit" variant="error" size="sm">Delete</Button>
 					</form>
 				</li>
 			))}
@@ -107,42 +105,33 @@ const saveResult = Astro.getActionResult(actions.variables.save);
 		margin: 2rem auto;
 		padding: 0 1rem;
 	}
-	header {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		justify-content: space-between;
-		gap: 0.5rem 1rem;
-	}
-	header a {
-		color: #6b7280;
-		text-decoration: none;
-	}
 	.intro {
-		color: #4b5563;
+		margin-top: 0.75rem;
+		color: var(--muted-foreground);
 		line-height: 1.6;
 	}
 	code {
-		background: #f3f4f6;
+		background: var(--muted);
+		color: var(--foreground);
 		padding: 0.05rem 0.3rem;
 		border-radius: 3px;
 		font-size: 0.875em;
 	}
 	.error,
 	.ok {
+		margin-top: 1.25rem;
 		padding: 0.6rem 0.85rem;
 		border-radius: 4px;
 		font-size: 0.875rem;
+		color: var(--foreground);
 	}
 	.error {
-		background: #fef2f2;
-		border: 1px solid #fecaca;
-		color: #b91c1c;
+		background: color-mix(in oklch, var(--error), transparent 90%);
+		border: 1px solid color-mix(in oklch, var(--error), transparent 60%);
 	}
 	.ok {
-		background: #ecfdf5;
-		border: 1px solid #a7f3d0;
-		color: #047857;
+		background: color-mix(in oklch, var(--success), transparent 90%);
+		border: 1px solid color-mix(in oklch, var(--success), transparent 60%);
 	}
 	.new-variable {
 		display: grid;
@@ -153,9 +142,9 @@ const saveResult = Astro.getActionResult(actions.variables.save);
 		align-items: end;
 		margin: 1.5rem 0;
 		padding: 1rem;
-		border: 1px solid #e5e7eb;
+		border: 1px solid var(--border);
 		border-radius: 6px;
-		background: #f9fafb;
+		background: color-mix(in oklch, var(--muted), transparent 40%);
 	}
 	.new-variable :global([data-slot='label']) {
 		display: block;
@@ -163,7 +152,7 @@ const saveResult = Astro.getActionResult(actions.variables.save);
 		margin-bottom: 0.25rem;
 	}
 	.empty {
-		color: #6b7280;
+		color: var(--muted-foreground);
 	}
 	.variable-list {
 		list-style: none;
@@ -173,7 +162,7 @@ const saveResult = Astro.getActionResult(actions.variables.save);
 		flex-direction: column;
 		gap: 0.5rem;
 	}
-	/* On a phone the row stacks name, value and Guardar, and keeps Eliminar in
+	/* On a phone the row stacks name, value and Save, and keeps Delete in
 	   its own column bottom-aligned, so the two buttons still read as one row
 	   even though they belong to separate forms. */
 	.variable-list li {

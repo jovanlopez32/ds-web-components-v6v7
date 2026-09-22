@@ -130,7 +130,7 @@ export async function compileComponentLess(
 		return { css: output.css, error: null };
 	} catch (error) {
 		const lessError = error as { message?: string; line?: number; filename?: string };
-		const message = lessError.message ?? 'Error al compilar LESS';
+		const message = lessError.message ?? 'Error compiling LESS';
 
 		// An error inside an imported platform file has nothing to do with the
 		// line the author is looking at, so it is reported by file instead.
@@ -141,7 +141,7 @@ export async function compileComponentLess(
 			return {
 				css: '',
 				error: {
-					message: `${message} (en ${path.basename(lessError.filename!)}, un archivo de plataforma)`,
+					message: `${message} (in ${path.basename(lessError.filename!)}, a platform file)`,
 					line: null,
 					region: 'platform',
 				},
@@ -175,7 +175,7 @@ export async function compileComponentLess(
 		return {
 			css: '',
 			error: {
-				message: `${message} (el error está en las variables del sitio, en Configuration)`,
+				message: `${message} (the error is in the site variables, in Configuration)`,
 				line: null,
 				region: 'site-variables',
 			},

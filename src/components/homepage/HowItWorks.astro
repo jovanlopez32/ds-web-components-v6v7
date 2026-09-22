@@ -1,0 +1,185 @@
+---
+import { Skeleton } from "../starwind/skeleton";
+import IconCode from "@tabler/icons/outline/code.svg";
+import IconLayoutGrid from "@tabler/icons/outline/layout-grid.svg";
+import IconCopy from "@tabler/icons/outline/copy.svg";
+import IconCheck from "@tabler/icons/outline/check.svg";
+import IconDeviceDesktop from "@tabler/icons/outline/device-desktop.svg";
+import IconDeviceTablet from "@tabler/icons/outline/device-tablet.svg";
+import IconDeviceMobile from "@tabler/icons/outline/device-mobile.svg";
+
+const snippet = `.welcome-link {\n  background-color: @index-primary;\n  color: @white;\n}`;
+---
+
+<section id="how-it-works" class="w-full pt-0 pb-10">
+	<div class="mx-auto max-w-6xl px-6">
+		<div data-reveal class="max-w-xl">
+			<h2 class="font-serif text-3xl font-bold tracking-tight text-foreground md:text-4xl">How it works</h2>
+			<p class="mt-4 max-w-[60ch] text-base leading-relaxed text-muted-foreground">
+				Every component ships as real ASP markup and LESS styles: build it, preview it, then copy the exact
+				source into the platform.
+			</p>
+		</div>
+
+		<div
+			class="mt-16 grid grid-cols-1 gap-10 border-t border-border pt-10 md:grid-cols-12 md:gap-0 md:divide-x md:divide-border"
+		>
+			<div data-reveal class="md:col-span-5 md:pr-10">
+				<div class="flex items-center gap-2 text-muted-foreground">
+					<IconCode class="size-4" aria-hidden="true" />
+					<h3 class="text-xl font-semibold text-foreground">Create</h3>
+				</div>
+				<p class="mt-2 max-w-[42ch] text-sm leading-relaxed text-muted-foreground">
+					Write the ASP markup, LESS styles, and JS behavior in the built-in editor, with a live preview
+					updating as you type.
+				</p>
+
+				<div class="mt-6 bg-muted/40 p-4" aria-hidden="true">
+					<div class="inline-flex items-center gap-1 bg-muted p-1 text-xs font-medium">
+						<span class="bg-foreground px-2.5 py-1 text-background">ASP</span>
+						<span class="px-2.5 py-1 text-muted-foreground">LESS</span>
+						<span class="px-2.5 py-1 text-muted-foreground">JS</span>
+					</div>
+					<div class="mt-3 font-mono text-xs leading-relaxed text-muted-foreground">
+						&lt;h1&gt;&lt;%=TXT_DEALERSHIP_NAME%&gt;&lt;/h1&gt;<span
+							class="caret-blink ml-0.5 inline-block h-3.5 w-px bg-foreground motion-reduce:hidden"
+						></span>
+					</div>
+				</div>
+			</div>
+
+			<div data-reveal class="md:col-span-4 md:px-10">
+				<div class="flex items-center gap-2 text-muted-foreground">
+					<IconLayoutGrid class="size-4" aria-hidden="true" />
+					<h3 class="text-xl font-semibold text-foreground">Visualize &amp; reuse</h3>
+				</div>
+				<p class="mt-2 max-w-[38ch] text-sm leading-relaxed text-muted-foreground">
+					Check exactly how it renders on desktop, tablet, and mobile, then find it again anywhere by its
+					reference number.
+				</p>
+
+				<div class="mt-6 flex items-center justify-between gap-3" aria-hidden="true">
+					<div class="flex items-center gap-3 text-muted-foreground">
+						<IconDeviceDesktop class="size-4" aria-hidden="true" />
+						<IconDeviceTablet class="size-4" aria-hidden="true" />
+						<IconDeviceMobile class="size-4 text-foreground" aria-hidden="true" />
+					</div>
+					<span class="font-mono text-xs text-muted-foreground">
+						Ref <code class="bg-muted px-1.5 py-0.5 text-foreground">12</code>
+					</span>
+				</div>
+
+				<div class="mt-4 bg-muted/40 p-4">
+					<Skeleton class="h-2.5 w-full rounded-none" />
+					<Skeleton class="mt-1.5 h-2.5 w-2/3 rounded-none" />
+				</div>
+			</div>
+
+			<div data-reveal class="md:col-span-3 md:pl-10">
+				<div class="flex items-center gap-2 text-muted-foreground">
+					<IconCopy class="size-4" aria-hidden="true" />
+					<h3 class="text-xl font-semibold text-foreground">Copy &amp; paste</h3>
+				</div>
+				<p class="mt-2 max-w-[32ch] text-sm leading-relaxed text-muted-foreground">
+					Grab the exact ASP or LESS straight from the source drawer and drop it into the platform. No
+					rebuilding, no guessing.
+				</p>
+
+				<div class="mt-6 bg-muted/40 p-3">
+					<p class="text-xs font-medium text-foreground">LESS</p>
+					<pre
+						class="mt-2 overflow-hidden font-mono text-[11px] leading-relaxed text-muted-foreground"><code>.welcome-link {'{'}<br />&nbsp;&nbsp;background-color: @index-primary;<br />&nbsp;&nbsp;color: @white;<br />{'}'}</code></pre>
+					<button
+						type="button"
+						data-copy-demo-trigger
+						data-copy-text={snippet}
+						class="mt-3 inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-3 focus-visible:ring-outline/50 motion-reduce:transition-none"
+					>
+						<IconCopy data-copy-demo-icon class="size-3.5" aria-hidden="true" />
+						<IconCheck data-copy-demo-check class="hidden size-3.5" aria-hidden="true" />
+						<span data-copy-demo-label>Copy</span>
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<script>
+	const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+	if (!reduceMotion) {
+		const items = document.querySelectorAll("#how-it-works [data-reveal]");
+		const observer = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (entry.isIntersecting) {
+						entry.target.classList.add("is-visible");
+						observer.unobserve(entry.target);
+					}
+				}
+			},
+			{ threshold: 0.2 },
+		);
+		items.forEach((item) => observer.observe(item));
+	} else {
+		document.querySelectorAll("#how-it-works [data-reveal]").forEach((item) => item.classList.add("is-visible"));
+	}
+
+	document.querySelectorAll<HTMLButtonElement>("[data-copy-demo-trigger]").forEach((button) => {
+		button.addEventListener("click", async () => {
+			const text = button.getAttribute("data-copy-text") ?? "";
+			try {
+				await navigator.clipboard.writeText(text);
+			} catch {
+				return;
+			}
+
+			const icon = button.querySelector("[data-copy-demo-icon]");
+			const check = button.querySelector("[data-copy-demo-check]");
+			const label = button.querySelector("[data-copy-demo-label]");
+			icon?.classList.add("hidden");
+			check?.classList.remove("hidden");
+			if (label) label.textContent = "Copied";
+
+			window.setTimeout(() => {
+				icon?.classList.remove("hidden");
+				check?.classList.add("hidden");
+				if (label) label.textContent = "Copy";
+			}, 1500);
+		});
+	});
+</script>
+
+<style>
+	#how-it-works [data-reveal] {
+		opacity: 0;
+		transform: translateY(16px);
+		transition:
+			opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+			transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+	}
+
+	#how-it-works [data-reveal].is-visible {
+		opacity: 1;
+		transform: translateY(0);
+	}
+
+	.caret-blink {
+		animation: caret-blink 1s step-end infinite;
+	}
+
+	@keyframes caret-blink {
+		50% {
+			opacity: 0;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		#how-it-works [data-reveal] {
+			opacity: 1;
+			transform: none;
+			transition: none;
+		}
+	}
+</style>

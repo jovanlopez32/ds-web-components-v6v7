@@ -2,35 +2,162 @@
 export const prerender = false;
 
 import Layout from '../../layouts/AdminLayout.astro';
+import AdminPageHeader from '@/components/admin/AdminPageHeader.astro';
+import { createUserClient } from '../../lib/supabase';
+import { supabaseAdmin } from '../../lib/supabase-admin';
 import { Button } from '@/components/starwind/button';
+import IconSitemap from '@tabler/icons/outline/sitemap.svg';
+import IconPuzzle from '@tabler/icons/outline/puzzle.svg';
+import IconBraces from '@tabler/icons/outline/braces.svg';
+import IconUsers from '@tabler/icons/outline/users.svg';
+import IconPlus from '@tabler/icons/outline/plus.svg';
 
 const user = Astro.locals.user;
+const accessToken = Astro.cookies.get('sb-access-token')?.value;
+
+if (!accessToken) {
+	return Astro.redirect('/login');
+}
+
+const db = createUserClient(accessToken);
+
+// Run every read in parallel: none of these depend on each other, and this
+// page is nothing but a summary of them.
+const [{ data: pages }, { data: components }, { data: variables }, { data: adminUsers }] = await Promise.all([
+	db.from('pages').select('id, parent_id, title, admin_slug'),
+	db
+		.from('components')
+		.select('id, ref, title, updated_at, page_id')
+		.order('updated_at', { ascending: false }),
+	db.from('variables').select('id'),
+	// Needs the secret key: there is no RLS-safe way to count auth.users from
+	// the client's own session, and this is the one place that count matters.
+	supabaseAdmin.auth.admin.listUsers(),
+]);
+
+const pageById = new Map((pages ?? []).map((page) => [page.id, page]));
+const topLevelCount = (pages ?? []).filter((page) => !page.parent_id).length;
+const subpageCount = (pages ?? []).length - topLevelCount;
+
+const stats = [
+	{
+		label: 'Pages',
+		value: pages?.length ?? 0,
+		hint: `${topLevelCount} top-level · ${subpageCount} sub`,
+		icon: IconSitemap,
+		href: '/admin/pages',
+	},
+	{
+		label: 'Components',
+		value: components?.length ?? 0,
+		hint: 'Across every page',
+		icon: IconPuzzle,
+		href: undefined,
+	},
+	{
+		label: 'Global variables',
+		value: variables?.length ?? 0,
+		hint: 'Shared ASP values',
+		icon: IconBraces,
+		href: '/admin/variables',
+	},
+	{
+		label: 'Admin accounts',
+		value: adminUsers?.users.length ?? 0,
+		hint: 'Can sign in to /admin',
+		icon: IconUsers,
+		href: '/admin/users',
+	},
+];
+
+const recentComponents = (components ?? []).slice(0, 5);
 ---
 
 <Layout title="Admin">
-	<main class="admin">
-		<header>
-			<h1>Admin</h1>
-			<form action="/api/auth/signout">
-				<Button type="submit" size="sm">Cerrar sesión</Button>
+	<main class="mx-auto w-full max-w-5xl px-4 pb-20 sm:px-6">
+		<AdminPageHeader title="Dashboard" description={`Signed in as ${user?.email ?? 'unknown'}.`}>
+			<form slot="actions" action="/api/auth/signout">
+				<Button type="submit" variant="outline" size="sm">Sign out</Button>
 			</form>
-		</header>
-		<p>Sesión iniciada como {user?.email}</p>
-		<a href="/admin/users/new">Crear cuenta de admin</a>
+		</AdminPageHeader>
+
+		<div class="mt-8 grid grid-cols-2 gap-x-6 gap-y-6 border border-border bg-card p-6 sm:grid-cols-4 sm:divide-x sm:divide-border">
+			{stats.map((stat) => {
+				const Icon = stat.icon;
+				return (
+					<div class="sm:px-6 sm:first:pl-0">
+						{stat.href ? (
+							<a
+								href={stat.href}
+								class="group -m-1 block rounded-md p-1 outline-none focus-visible:ring-3 focus-visible:ring-outline/50"
+							>
+								<div class="flex items-center gap-2 text-muted-foreground">
+									<Icon class="size-4" aria-hidden="true" />
+									<span class="text-sm font-medium">{stat.label}</span>
+								</div>
+								<p class="mt-2 text-3xl font-semibold tabular-nums text-foreground transition-colors group-hover:text-primary">
+									{stat.value}
+								</p>
+								<p class="mt-1 text-xs text-muted-foreground">{stat.hint}</p>
+							</a>
+						) : (
+							<div>
+								<div class="flex items-center gap-2 text-muted-foreground">
+									<Icon class="size-4" aria-hidden="true" />
+									<span class="text-sm font-medium">{stat.label}</span>
+								</div>
+								<p class="mt-2 text-3xl font-semibold tabular-nums text-foreground">{stat.value}</p>
+								<p class="mt-1 text-xs text-muted-foreground">{stat.hint}</p>
+							</div>
+						)}
+					</div>
+				);
+			})}
+		</div>
+
+		<div class="mt-8 flex flex-wrap gap-3">
+			<Button as="a" href="/admin/pages" size="sm">
+				<IconPlus class="size-4" aria-hidden="true" />
+				New page
+			</Button>
+			<Button as="a" href="/admin/variables" variant="outline" size="sm">Global variables</Button>
+			<Button as="a" href="/admin/configuration" variant="outline" size="sm">Configuration</Button>
+			<Button as="a" href="/admin/users" variant="outline" size="sm">Admin accounts</Button>
+		</div>
+
+		<section class="mt-10">
+			<h2 class="text-lg font-semibold text-foreground">Recently updated</h2>
+
+			{recentComponents.length === 0 ? (
+				<p class="mt-4 text-sm text-muted-foreground">
+					No components yet. <a href="/admin/pages" class="text-foreground underline underline-offset-2">Create a page</a> to get started.
+				</p>
+			) : (
+				<ul class="mt-4 flex flex-col gap-2">
+					{recentComponents.map((component) => {
+						const page = pageById.get(component.page_id);
+						return (
+							<li class="flex flex-wrap items-center justify-between gap-3 border border-border bg-card px-4 py-3">
+								<div class="min-w-0">
+									<p class="truncate text-sm font-medium text-foreground">{component.title}</p>
+									<p class="mt-0.5 truncate text-xs text-muted-foreground">
+										{page?.title ?? 'Unknown page'}
+										{' · '}
+										Ref <code class="bg-muted px-1 py-0.5 text-foreground">{component.ref}</code>
+										{' · '}
+										{new Date(component.updated_at).toLocaleDateString('en-US', { dateStyle: 'medium' })}
+									</p>
+								</div>
+								{page && (
+									<Button as="a" href={`/admin/pages/${page.admin_slug}/components/${component.id}`} variant="outline" size="sm">
+										Edit
+									</Button>
+								)}
+							</li>
+						);
+					})}
+				</ul>
+			)}
+		</section>
 	</main>
 </Layout>
-
-<style>
-	.admin {
-		max-width: 640px;
-		margin: 2rem auto;
-		padding: 0 1rem;
-	}
-	header {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		justify-content: space-between;
-		gap: 0.5rem 1rem;
-	}
-</style>

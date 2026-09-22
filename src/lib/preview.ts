@@ -102,7 +102,7 @@ export function buildPreviewDocument(input: PreviewInput, settings: PreviewSetti
 	// with the DS globals, and in try/catch so a throw is reported rather than
 	// leaving a silently half-initialised component.
 	return `<!doctype html>
-<html lang="es">
+<html lang="en">
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
@@ -111,7 +111,7 @@ export function buildPreviewDocument(input: PreviewInput, settings: PreviewSetti
 				parent.postMessage({
 					source: 'ds-preview',
 					kind: 'runtime-error',
-					message: event.message || 'Error desconocido',
+					message: event.message || 'Unknown error',
 					line: typeof event.lineno === 'number' ? event.lineno : null,
 				}, '*');
 			});
@@ -119,7 +119,7 @@ export function buildPreviewDocument(input: PreviewInput, settings: PreviewSetti
 				parent.postMessage({
 					source: 'ds-preview',
 					kind: 'runtime-error',
-					message: 'Promesa rechazada: ' + (event.reason && event.reason.message || event.reason),
+					message: 'Unhandled rejection: ' + (event.reason && event.reason.message || event.reason),
 					line: null,
 				}, '*');
 			});

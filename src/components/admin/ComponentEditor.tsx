@@ -48,7 +48,7 @@ const TABS: { key: TabKey; label: string; language: CodeLanguage }[] = [
 
 function formatDateTime(value: string | Date): string {
 	const date = typeof value === 'string' ? new Date(value) : value;
-	return date.toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' });
+	return date.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
 }
 
 export default function ComponentEditor({
@@ -152,13 +152,13 @@ export default function ComponentEditor({
 		if (createError) return reportSaveError(createError);
 
 		// A freshly created component has no id in this island's state, so
-		// staying here would leave "Guardar" creating duplicates.
+		// staying here would leave "Save" creating duplicates.
 		window.location.href = backHref;
 	}
 
 	async function handleDelete() {
 		if (!component) return;
-		if (!window.confirm(`¿Eliminar "${component.title}"? Esta acción no se puede deshacer.`)) {
+		if (!window.confirm(`Delete "${component.title}"? This action cannot be undone.`)) {
 			return;
 		}
 
@@ -200,8 +200,8 @@ export default function ComponentEditor({
 		<div className="editor">
 			<header className="editor-header">
 				<div>
-					<a href={backHref}>&larr; Volver a {pageTitle}</a>
-					<h1>{isEditing ? 'Editar componente' : 'Nuevo componente'}</h1>
+					<a href={backHref}>&larr; Back to {pageTitle}</a>
+					<h1>{isEditing ? 'Edit component' : 'New component'}</h1>
 				</div>
 				<div className="editor-actions">
 					{isEditing && (
@@ -211,7 +211,7 @@ export default function ComponentEditor({
 							onClick={handleDelete}
 							disabled={isDeleting || isSaving}
 						>
-							{isDeleting ? 'Eliminando…' : 'Eliminar'}
+							{isDeleting ? 'Deleting…' : 'Delete'}
 						</button>
 					)}
 					<button
@@ -220,7 +220,7 @@ export default function ComponentEditor({
 						onClick={handleSave}
 						disabled={isSaving || isDeleting}
 					>
-						{isSaving ? 'Guardando…' : isEditing ? 'Guardar cambios' : 'Crear componente'}
+						{isSaving ? 'Saving…' : isEditing ? 'Save changes' : 'Create component'}
 					</button>
 				</div>
 			</header>
@@ -234,15 +234,15 @@ export default function ComponentEditor({
 			{component && (
 				<dl className="editor-meta">
 					<div>
-						<dt>Creado por</dt>
-						<dd>{component.createdByEmail ?? 'desconocido'}</dd>
+						<dt>Created by</dt>
+						<dd>{component.createdByEmail ?? 'unknown'}</dd>
 					</div>
 					<div>
-						<dt>Última modificación</dt>
+						<dt>Last modified</dt>
 						<dd>{updatedAt ? formatDateTime(updatedAt) : '—'}</dd>
 					</div>
 					<div>
-						<dt>Referencia</dt>
+						<dt>Reference</dt>
 						<dd>
 							<code>{reference}</code>
 							<button
@@ -250,7 +250,7 @@ export default function ComponentEditor({
 								className={`${button({ variant: 'outline', size: 'sm' })} editor-copy`}
 								onClick={copyReference}
 							>
-								{copied ? 'Copiado' : 'Copiar'}
+								{copied ? 'Copied' : 'Copy'}
 							</button>
 						</dd>
 					</div>
@@ -258,13 +258,13 @@ export default function ComponentEditor({
 			)}
 
 			<label className="editor-title">
-				Título
+				Title
 				<input
 					type="text"
 					className={input({ size: 'sm' })}
 					value={title}
 					onChange={(event) => setTitle(event.target.value)}
-					placeholder="Ej. Sección What You Need"
+					placeholder="E.g. What You Need section"
 					required
 				/>
 			</label>
@@ -288,10 +288,10 @@ export default function ComponentEditor({
 
 					{activeTab === 'mixins' && (
 						<p className="editor-tab-help">
-							Mixins propios de este componente, compilados antes de su LESS. Defínelos con
-							paréntesis — <code>.algo() {'{ … }'}</code> — para que no emitan CSS por su
-							cuenta. Los mixins de plataforma (<code>.transition()</code>,{' '}
-							<code>.display-flex()</code>) ya están disponibles sin declarar nada.
+							This component's own mixins, compiled before its LESS. Define them with
+							parentheses — <code>.something() {'{ … }'}</code> — so they don't emit CSS on
+							their own. Platform mixins (<code>.transition()</code>,{' '}
+							<code>.display-flex()</code>) are already available without declaring anything.
 						</p>
 					)}
 

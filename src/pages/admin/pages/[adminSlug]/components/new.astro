@@ -28,7 +28,7 @@ if (!page) {
 const [settings, globalVariables] = await Promise.all([loadPreviewSettingsCached(db), loadGlobalVariables(db)]);
 ---
 
-<Layout title={`Nuevo componente — ${page.title}`}>
+<Layout title={`New component — ${page.title}`}>
 	<main>
 		<!--
 			client:only is required, not a preference: CodeMirror needs a real
@@ -42,7 +42,7 @@ const [settings, globalVariables] = await Promise.all([loadPreviewSettingsCached
 			settings={settings}
 			globalVariables={globalVariables}
 		>
-			<p slot="fallback">Cargando editor…</p>
+			<p slot="fallback">Loading editor…</p>
 		</ComponentEditor>
 	</main>
 </Layout>

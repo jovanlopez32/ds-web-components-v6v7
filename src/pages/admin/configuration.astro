@@ -3,6 +3,7 @@ export const prerender = false;
 
 import { actions } from 'astro:actions';
 import Layout from '../../layouts/AdminLayout.astro';
+import AdminPageHeader from '@/components/admin/AdminPageHeader.astro';
 import { createUserClient } from '../../lib/supabase';
 import { loadPreviewSettings } from '../../lib/settings';
 import { Button } from '@/components/starwind/button';
@@ -25,26 +26,23 @@ const result = Astro.getActionResult(actions.settings.save);
 
 <Layout title="Configuration">
 	<main class="admin">
-		<header>
-			<h1>Configuration</h1>
-			<a href="/admin">&larr; Volver al dashboard</a>
-		</header>
+		<AdminPageHeader title="Configuration" backHref="/admin" />
 
 		<p class="intro">
-			Estos valores definen el entorno en el que se renderiza la vista previa de cada
-			componente, para que se comporte igual que la plataforma real.
+			These values define the environment in which each component's preview renders, so
+			it behaves the same as the real platform.
 		</p>
 
-		{result?.error && <p class="error">No se pudo guardar: {result.error.message}</p>}
-		{result && !result.error && <p class="ok">Configuración guardada.</p>}
+		{result?.error && <p class="error">Could not save: {result.error.message}</p>}
+		{result && !result.error && <p class="ok">Configuration saved.</p>}
 
 		<form method="POST" action={actions.settings.save}>
-			<Label for="previewCssUrls">Hojas de estilo externas</Label>
+			<Label for="previewCssUrls">External stylesheets</Label>
 			<p class="help">
-				Una URL por línea, inyectadas como <code>&lt;link&gt;</code> solo en la vista previa —
-				nunca en este admin. Aquí van las fuentes de iconos y cualquier CSS externo que la
-				plataforma cargue en su <code>&lt;head&gt;</code> (Font Awesome, iconmonstr). Las
-				<code>//</code> se fijan a <code>https:</code> automáticamente.
+				One URL per line, injected as <code>&lt;link&gt;</code> only in the preview —
+				never in this admin. This is where icon fonts and any external CSS the
+				platform loads in its <code>&lt;head&gt;</code> go (Font Awesome, iconmonstr).
+				<code>//</code> URLs are pinned to <code>https:</code> automatically.
 			</p>
 			<Textarea id="previewCssUrls" name="previewCssUrls" rows="4" spellcheck="false"
 				>{settings.previewCssUrls.join('\n')}</Textarea
@@ -52,29 +50,29 @@ const result = Astro.getActionResult(actions.settings.save);
 
 			<Label for="previewJsUrls">Scripts</Label>
 			<p class="help">
-				Una URL por línea, cargados antes del JS del componente. Aquí va jQuery. El JS
-				vainilla no necesita nada extra: funciona igual con o sin jQuery cargado, así que no
-				hay que separarlos.
+				One URL per line, loaded before the component's JS. This is where jQuery goes.
+				Vanilla JS needs nothing extra: it works the same with or without jQuery
+				loaded, so they don't need to be kept separate.
 			</p>
 			<Textarea id="previewJsUrls" name="previewJsUrls" rows="3" spellcheck="false"
 				>{settings.previewJsUrls.join('\n')}</Textarea
 			>
 
-			<Label for="previewLessVariables">Variables del sitio (LESS)</Label>
+			<Label for="previewLessVariables">Site variables (LESS)</Label>
 			<p class="help">
-				Solo las variables que <strong>cambian de un sitio a otro</strong>:
-				<code>@black</code>, <code>@index-primary</code>, <code>@img-path</code>. Los mixins y
-				las variables de plataforma <strong>ya no van aquí</strong>: se leen de los archivos
-				reales en <code>src/v6v7/_platform-less-ref</code> al compilar, así que
-				<code>.container</code>, <code>.transition()</code> o <code>@screen-lg-min</code>
-				funcionan sin declarar nada. Si un componente usa una variable de tema que no está
-				aquí, la compilación falla y verás el error en el editor.
+				Only the variables that <strong>change from site to site</strong>:
+				<code>@black</code>, <code>@index-primary</code>, <code>@img-path</code>. Platform
+				mixins and variables <strong>no longer go here</strong>: they are read straight
+				from the real files in <code>src/v6v7/_platform-less-ref</code> at compile time,
+				so <code>.container</code>, <code>.transition()</code>, or <code>@screen-lg-min</code>
+				work without declaring anything. If a component uses a theme variable that isn't
+				here, compilation fails and you'll see the error in the editor.
 			</p>
 			<Textarea id="previewLessVariables" name="previewLessVariables" rows="10" spellcheck="false"
 				>{settings.previewLessVariables}</Textarea
 			>
 
-			<Button type="submit" class="save-button">Guardar configuración</Button>
+			<Button type="submit" variant="primary" class="save-button">Save configuration</Button>
 		</form>
 	</main>
 </Layout>
@@ -85,35 +83,25 @@ const result = Astro.getActionResult(actions.settings.save);
 		margin: 2rem auto;
 		padding: 0 1rem;
 	}
-	header {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		justify-content: space-between;
-		gap: 0.5rem 1rem;
-	}
-	header a {
-		color: #6b7280;
-		text-decoration: none;
-	}
 	.intro {
-		color: #4b5563;
+		margin-top: 0.75rem;
+		color: var(--muted-foreground);
 	}
 	.error,
 	.ok {
+		margin-top: 1.25rem;
 		padding: 0.6rem 0.85rem;
 		border-radius: 4px;
 		font-size: 0.875rem;
+		color: var(--foreground);
 	}
 	.error {
-		background: #fef2f2;
-		border: 1px solid #fecaca;
-		color: #b91c1c;
+		background: color-mix(in oklch, var(--error), transparent 90%);
+		border: 1px solid color-mix(in oklch, var(--error), transparent 60%);
 	}
 	.ok {
-		background: #ecfdf5;
-		border: 1px solid #a7f3d0;
-		color: #047857;
+		background: color-mix(in oklch, var(--success), transparent 90%);
+		border: 1px solid color-mix(in oklch, var(--success), transparent 60%);
 	}
 	form {
 		display: flex;
@@ -125,12 +113,13 @@ const result = Astro.getActionResult(actions.settings.save);
 	}
 	.help {
 		margin: 0.35rem 0 0.5rem;
-		color: #6b7280;
+		color: var(--muted-foreground);
 		font-size: 0.8125rem;
 		line-height: 1.5;
 	}
 	.help code {
-		background: #f3f4f6;
+		background: var(--muted);
+		color: var(--foreground);
 		padding: 0.05rem 0.3rem;
 		border-radius: 3px;
 	}

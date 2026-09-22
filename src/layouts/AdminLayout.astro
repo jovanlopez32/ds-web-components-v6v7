@@ -16,7 +16,7 @@ interface Props {
 const { title, nav = true } = Astro.props;
 ---
 
-<html lang="es">
+<html lang="en">
 	<head>
 		<meta charset="utf-8" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -33,5 +33,6 @@ const { title, nav = true } = Astro.props;
 		<div class={nav ? 'pt-20 md:pt-24' : undefined}>
 			<slot />
 		</div>
+		<div class="fixed inset-0 -z-10 h-full w-full bg-neutral-50 dark:bg-neutral-900 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-size-[14px_24px]"></div>
 	</body>
 </html>

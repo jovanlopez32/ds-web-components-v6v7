@@ -2,6 +2,15 @@
 export const prerender = false;
 
 import Layout from '../layouts/AdminLayout.astro';
+import DSLogo from '@/components/DSLogo2.svg';
+import IconMail from '@tabler/icons/outline/mail.svg';
+import IconLock from '@tabler/icons/outline/lock.svg';
+import IconEye from '@tabler/icons/outline/eye.svg';
+import IconEyeOff from '@tabler/icons/outline/eye-off.svg';
+import IconAlertCircle from '@tabler/icons/outline/alert-circle.svg';
+import { Button } from '@/components/starwind/button';
+import { Label } from '@/components/starwind/label';
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/starwind/input-group';
 
 const accessToken = Astro.cookies.get('sb-access-token');
 const refreshToken = Astro.cookies.get('sb-refresh-token');
@@ -12,63 +21,178 @@ if (accessToken && refreshToken) {
 
 const error = Astro.url.searchParams.get('error');
 const errorMessages: Record<string, string> = {
-	missing_fields: 'Ingresa tu correo y contraseña.',
-	invalid_credentials: 'Correo o contraseña incorrectos.',
+	missing_fields: 'Enter your email and password.',
+	invalid_credentials: 'Incorrect email or password.',
 };
 ---
 
-<Layout title="Iniciar sesión" nav={false}>
-	<main class="login">
-		<form action="/api/auth/signin" method="post">
-			<h1>Iniciar sesión</h1>
-			{error && <p class="error">{errorMessages[error] ?? 'Ocurrió un error, intenta de nuevo.'}</p>}
-			<label for="email">Correo</label>
-			<input type="email" name="email" id="email" required autocomplete="email" />
-			<label for="password">Contraseña</label>
-			<input type="password" name="password" id="password" required autocomplete="current-password" />
-			<button type="submit">Entrar</button>
-		</form>
+<Layout title="Sign in" nav={false}>
+	<main class="relative flex min-h-[100dvh] items-center justify-center overflow-hidden bg-background px-6 py-10">
+		<span class="blob blob-a" aria-hidden="true"></span>
+		<span class="blob blob-b" aria-hidden="true"></span>
+		<span class="blob blob-c" aria-hidden="true"></span>
+
+		<div class="relative z-10 w-full max-w-sm">
+			<div class="mb-8 flex flex-col items-center gap-4">
+				<DSLogo role="img" aria-label="LeadVenture Design System" class="h-8 w-auto text-neutral-900 dark:text-white" />
+			</div>
+
+			<div class="rounded-2xl bg-card/40 px-6 py-8 backdrop-blur-sm sm:px-8">
+				<div class="mb-7 text-center">
+					<h1 class="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Sign in</h1>
+					<p class="mx-auto mt-2 max-w-[34ch] text-sm leading-relaxed text-muted-foreground">
+						Sign in with your LeadVenture email to manage the Design System.
+					</p>
+				</div>
+
+				{
+					error && (
+						<div role="alert" class="mb-6 flex items-start gap-2 rounded-md border border-error/30 bg-error/10 px-3 py-2.5 text-sm text-error">
+							<IconAlertCircle aria-hidden="true" class="mt-0.5 size-4 shrink-0" />
+							<span>{errorMessages[error] ?? 'Something went wrong. Please try again.'}</span>
+						</div>
+					)
+				}
+
+				<form action="/api/auth/signin" method="post" class="flex flex-col gap-5">
+					<div class="flex flex-col gap-2">
+						<Label for="email">Email</Label>
+						<InputGroup>
+							<InputGroupAddon align="inline-start">
+								<IconMail aria-hidden="true" class="size-4" />
+							</InputGroupAddon>
+							<InputGroupInput
+								type="email"
+								name="email"
+								id="email"
+								required
+								autocomplete="email"
+								placeholder="you@leadventure.com"
+							/>
+						</InputGroup>
+					</div>
+
+					<div class="flex flex-col gap-2">
+						<Label for="password">Password</Label>
+						<InputGroup>
+							<InputGroupAddon align="inline-start">
+								<IconLock aria-hidden="true" class="size-4" />
+							</InputGroupAddon>
+							<InputGroupInput
+								type="password"
+								name="password"
+								id="password"
+								required
+								autocomplete="current-password"
+								data-password-input
+							/>
+							<InputGroupAddon align="inline-end">
+								<InputGroupButton
+									type="button"
+									size="icon-sm"
+									aria-label="Show password"
+									aria-pressed="false"
+									data-password-toggle
+								>
+									<IconEye aria-hidden="true" class="size-4" data-icon-show />
+									<IconEyeOff aria-hidden="true" class="hidden size-4" data-icon-hide />
+								</InputGroupButton>
+							</InputGroupAddon>
+						</InputGroup>
+					</div>
+
+					<Button type="submit" variant="primary" size="lg" class="mt-1 w-full">
+						Sign in
+					</Button>
+				</form>
+			</div>
+		</div>
 	</main>
 </Layout>
 
 <style>
-	.login {
-		display: flex;
-		/* dvh, because 100vh on iOS Safari counts the address bar and pushes a
-		   vertically centred form partly under it. */
-		min-height: 100vh;
-		min-height: 100dvh;
-		align-items: center;
-		justify-content: center;
-		padding: 1.5rem 1rem;
+	.blob {
+		position: absolute;
+		display: block;
+		border-radius: 9999px;
+		pointer-events: none;
+		filter: blur(90px);
+		will-change: transform;
 	}
-	form {
-		display: flex;
-		/* A fixed 320px form has its fields touching both edges on a 320px
-		   phone. Cap it instead, and let the wrapper's padding hold the margin. */
-		width: 100%;
-		max-width: 320px;
-		flex-direction: column;
-		gap: 0.75rem;
+	.blob-a {
+		top: -12rem;
+		left: -10rem;
+		width: 34rem;
+		height: 34rem;
+		background: radial-gradient(circle at 30% 30%, #f7941d, transparent 70%);
+		opacity: 0.5;
+		animation: blob-drift-a 22s ease-in-out infinite alternate;
 	}
-	.error {
-		color: #b91c1c;
-		margin: 0;
+	.blob-b {
+		right: -12rem;
+		bottom: -13rem;
+		width: 36rem;
+		height: 36rem;
+		background: radial-gradient(circle at 70% 70%, #ffb257, transparent 70%);
+		opacity: 0.4;
+		animation: blob-drift-b 26s ease-in-out infinite alternate;
 	}
-	input {
-		/* 1rem exactly: iOS Safari zooms the whole page in when a focused
-		   field's text is smaller than 16px. */
-		font-size: 1rem;
-		padding: 0.5rem;
-		border: 1px solid #ccc;
-		border-radius: 4px;
+	.blob-c {
+		top: 50%;
+		left: 50%;
+		width: 24rem;
+		height: 24rem;
+		transform: translate(-50%, -50%);
+		background: radial-gradient(circle, #f7941d, transparent 70%);
+		opacity: 0.22;
+		animation: blob-drift-c 19s ease-in-out infinite alternate;
 	}
-	button {
-		padding: 0.6rem;
-		border: none;
-		border-radius: 4px;
-		background: #111827;
-		color: white;
-		cursor: pointer;
+
+	@keyframes blob-drift-a {
+		from {
+			transform: translate(0, 0) scale(1);
+		}
+		to {
+			transform: translate(3rem, 2rem) scale(1.08);
+		}
+	}
+	@keyframes blob-drift-b {
+		from {
+			transform: translate(0, 0) scale(1);
+		}
+		to {
+			transform: translate(-2.5rem, -3rem) scale(1.05);
+		}
+	}
+	@keyframes blob-drift-c {
+		from {
+			transform: translate(-50%, -50%) scale(1);
+		}
+		to {
+			transform: translate(calc(-50% - 2rem), calc(-50% + 1.5rem)) scale(0.9);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.blob-a,
+		.blob-b,
+		.blob-c {
+			animation: none;
+		}
 	}
 </style>
+
+<script>
+	const toggle = document.querySelector<HTMLButtonElement>('[data-password-toggle]');
+	const input = document.querySelector<HTMLInputElement>('[data-password-input]');
+
+	toggle?.addEventListener('click', () => {
+		if (!input) return;
+		const showing = input.type === 'text';
+		input.type = showing ? 'password' : 'text';
+		toggle.setAttribute('aria-pressed', String(!showing));
+		toggle.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+		toggle.querySelector('[data-icon-show]')?.classList.toggle('hidden', !showing);
+		toggle.querySelector('[data-icon-hide]')?.classList.toggle('hidden', showing);
+	});
+</script>

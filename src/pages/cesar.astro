@@ -10,7 +10,7 @@ import { Switch } from "@/components/starwind/switch";
 	<main class="flex min-h-[100dvh] flex-col items-center justify-center gap-6 px-4 py-10">
 		<h1 class="text-3xl font-bold">Cesar Rodriguez</h1>
 		<h2 class="bg-red-500 text-4xl text-green-900 p-4">
-		¡Si ves esto con fondo rojo y letra grande, Tailwind funciona!
+		If you see this with a red background and big letters, Tailwind works!
 		</h2>
 
 		<Switch id="default" label="Default" variant="default" defaultChecked />
@@ -32,7 +32,7 @@ import { Switch } from "@/components/starwind/switch";
 				<Switch id="test-switch" label="Test Switch" variant="primary" />
 
 				<div id="status-display" class="text-muted-foreground text-sm">
-				Switch is currently: <span class="text-foreground font-medium">apagado</span>
+				Switch is currently: <span class="text-foreground font-medium">off</span>
 				</div>
 			</div>
 		</div>
@@ -43,7 +43,7 @@ import { Switch } from "@/components/starwind/switch";
 
 		root?.addEventListener("starwind:checked-change", (event) => {
 			const { checked } = (event as CustomEvent<{ checked: boolean }>).detail;
-			if (output) output.textContent = checked ? "encendido" : "apagado";
+			if (output) output.textContent = checked ? "on" : "off";
 		});
 		</script>
 

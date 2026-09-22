@@ -125,7 +125,7 @@ the production build emits no client chunk for `CodeComponent`. The sandboxed
 iframe is the same one the editor uses, with the same
 `allow-scripts`-without-`allow-same-origin` isolation.
 
-A working example lives at `src/pages/ejemplo-pagina-manual.astro`; copy it as a
+A working example lives at `src/pages/example-manual-page.astro`; copy it as a
 starting point. A `ref` that does not exist renders a visible error rather than
 nothing, since it means a typo in hand-written markup.
 
@@ -343,7 +343,7 @@ src/components/admin/
   CodePane.tsx                    one CodeMirror + Formatear
   ComponentPreview.tsx            the sandboxed iframe, driven by a snapshot
   VariablesPanel.tsx              per-component variables
-src/pages/ejemplo-pagina-manual.astro  example of a hand-written page
+src/pages/example-manual-page.astro    example of a hand-written page
 ```
 
 `ComponentPreview` renders a **snapshot** of the code — the state as of the last

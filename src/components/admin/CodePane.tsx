@@ -61,13 +61,13 @@ export default function CodePane({ language, value, onChange }: Props) {
 					onClick={handleFormat}
 					disabled={isFormatting || !value.trim()}
 				>
-					{isFormatting ? 'Formateando…' : 'Formatear'}
+					{isFormatting ? 'Formatting…' : 'Format'}
 				</button>
 			</div>
 
 			{formatError && (
 				<p className="code-pane-error" role="alert">
-					No se pudo formatear: {formatError}
+					Could not format: {formatError}
 				</p>
 			)}
 

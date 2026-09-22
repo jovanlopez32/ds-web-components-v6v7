@@ -1,4 +1,4 @@
-// Prettier in the browser, used by the "Formatear" button in the editor.
+// Prettier in the browser, used by the "Format" button in the editor.
 //
 // Everything is imported lazily: Prettier's standalone build plus three parser
 // plugins is a lot of bytes to hand someone who only came to read a component.
@@ -73,7 +73,7 @@ export async function formatCode(code: string, language: CodeLanguage): Promise<
 	} catch (error) {
 		return {
 			code,
-			error: error instanceof Error ? error.message : 'No se pudo formatear el código',
+			error: error instanceof Error ? error.message : 'Could not format the code',
 		};
 	}
 }

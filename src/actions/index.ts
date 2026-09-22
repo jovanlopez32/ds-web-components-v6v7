@@ -1,6 +1,7 @@
 import { ActionError, defineAction } from 'astro:actions';
 import { z } from 'astro/zod';
 import { createUserClient } from '../lib/supabase';
+import { supabaseAdmin } from '../lib/supabase-admin';
 import { invalidatePreviewSettings, loadPreviewSettingsCached } from '../lib/settings';
 // Imported statically, not lazily: Astro loads this actions module at server
 // start, so `less` and its 576 KB of code are parsed then rather than inside
@@ -17,7 +18,7 @@ function dbFor(context: ActionAPIContext) {
 	if (!accessToken) {
 		throw new ActionError({
 			code: 'UNAUTHORIZED',
-			message: 'Tu sesión expiró. Recarga la página para volver a entrar.',
+			message: 'Your session expired. Reload the page to sign in again.',
 		});
 	}
 
@@ -42,7 +43,7 @@ const optionalText = z
 	.transform((value) => value ?? '');
 
 const componentFields = z.object({
-	title: z.string().trim().min(1, 'El título es obligatorio'),
+	title: z.string().trim().min(1, 'Title is required'),
 	aspCode: optionalText,
 	lessCode: optionalText,
 	jsCode: optionalText,
@@ -75,7 +76,7 @@ export const server = {
 				// Guarded like every other action: this reads platform files
 				// and is only for signed-in authors.
 				if (!context.locals.user) {
-					throw new ActionError({ code: 'UNAUTHORIZED', message: 'No hay sesión activa.' });
+					throw new ActionError({ code: 'UNAUTHORIZED', message: 'No active session.' });
 				}
 
 				// Cached: this used to cost a Supabase round trip per compile,
@@ -92,7 +93,7 @@ export const server = {
 			input: componentFields.extend({ pageId: z.uuid() }),
 			handler: async (input, context) => {
 				if (!context.locals.user) {
-					throw new ActionError({ code: 'UNAUTHORIZED', message: 'No hay sesión activa.' });
+					throw new ActionError({ code: 'UNAUTHORIZED', message: 'No active session.' });
 				}
 
 				const { data, error } = await dbFor(context)
@@ -168,12 +169,12 @@ export const server = {
 		create: defineAction({
 			accept: 'form',
 			input: z.object({
-				title: z.string().trim().min(1, 'El título es obligatorio'),
+				title: z.string().trim().min(1, 'Title is required'),
 				slug: z
 					.string()
 					.trim()
-					.min(1, 'El slug es obligatorio')
-					.regex(/^[a-z0-9-]+$/, 'El slug solo admite minúsculas, números y guiones'),
+					.min(1, 'Slug is required')
+					.regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens'),
 				description: optionalText,
 				// Empty means a top-level page. The form only offers pages that
 				// are themselves top-level, keeping the tree to two levels
@@ -198,7 +199,7 @@ export const server = {
 						code: error.code === '23505' ? 'CONFLICT' : 'INTERNAL_SERVER_ERROR',
 						message:
 							error.code === '23505'
-								? `El slug "${input.slug}" ya está en uso.`
+								? `The slug "${input.slug}" is already in use.`
 								: error.message,
 					});
 				}
@@ -248,10 +249,10 @@ export const server = {
 				name: z
 					.string()
 					.trim()
-					.min(1, 'El nombre es obligatorio')
+					.min(1, 'Name is required')
 					.regex(
 						/^[A-Za-z_][A-Za-z0-9_]*$/,
-						'Debe ser un identificador válido, como TXT_IMG_PATH',
+						'Must be a valid identifier, like TXT_IMG_PATH',
 					),
 				value: optionalText,
 			}),
@@ -268,7 +269,7 @@ export const server = {
 						code: error.code === '23505' ? 'CONFLICT' : 'INTERNAL_SERVER_ERROR',
 						message:
 							error.code === '23505'
-								? `Ya existe una variable llamada "${input.name}".`
+								? `A variable named "${input.name}" already exists.`
 								: error.message,
 					});
 				}
@@ -283,6 +284,51 @@ export const server = {
 			handler: async ({ id }, context) => {
 				const { error } = await dbFor(context).from('variables').delete().eq('id', id);
 
+				fail(error);
+				return { id };
+			},
+		}),
+	},
+
+	users: {
+		// Deleting an auth user needs the service role key, so this goes through
+		// supabaseAdmin directly instead of dbFor(context) — there is no RLS-safe
+		// way to do this from the signed-in user's own client.
+		remove: defineAction({
+			accept: 'form',
+			input: z.object({ id: z.uuid() }),
+			handler: async ({ id }, context) => {
+				if (!context.locals.user) {
+					throw new ActionError({ code: 'UNAUTHORIZED', message: 'No active session.' });
+				}
+
+				// Without this check, whoever deletes their own account gets
+				// signed out mid-request with no admin account left to fix it.
+				if (id === context.locals.user.id) {
+					throw new ActionError({
+						code: 'BAD_REQUEST',
+						message: 'You cannot delete your own account.',
+					});
+				}
+
+				const { error } = await supabaseAdmin.auth.admin.deleteUser(id);
+				fail(error);
+				return { id };
+			},
+		}),
+
+		updatePassword: defineAction({
+			accept: 'form',
+			input: z.object({
+				id: z.uuid(),
+				password: z.string().min(8, 'Password must be at least 8 characters'),
+			}),
+			handler: async ({ id, password }, context) => {
+				if (!context.locals.user) {
+					throw new ActionError({ code: 'UNAUTHORIZED', message: 'No active session.' });
+				}
+
+				const { error } = await supabaseAdmin.auth.admin.updateUserById(id, { password });
 				fail(error);
 				return { id };
 			},

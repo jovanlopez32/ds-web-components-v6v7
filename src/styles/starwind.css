@@ -90,7 +90,7 @@
   --popover: var(--color-white);
   --popover-foreground: var(--color-neutral-950);
   --primary: var(--color-custom-orange);
-  --primary-foreground: var(--color-neutral-50);
+  --primary-foreground: var(--color-neutral-950);
   --primary-accent: var(--color-custom-orange);
   --secondary: var(--color-neutral-200);
   --secondary-foreground: var(--color-neutral-950);
@@ -116,7 +116,7 @@
   --sidebar-background: var(--color-neutral-50);
   --sidebar-foreground: var(--color-neutral-950);
   --sidebar-primary: var(--color-custom-orange);
-  --sidebar-primary-foreground: var(--color-neutral-50);
+  --sidebar-primary-foreground: var(--color-neutral-950);
   --sidebar-accent: var(--color-neutral-100);
   --sidebar-accent-foreground: var(--color-neutral-900);
   --sidebar-border: var(--color-neutral-200);
@@ -131,7 +131,7 @@
   --popover: var(--color-neutral-900);
   --popover-foreground: var(--color-neutral-50);
   --primary: var(--color-custom-orange);
-  --primary-foreground: var(--color-neutral-50);
+  --primary-foreground: var(--color-neutral-950);
   --primary-accent: var(--color-blue-400);
   --secondary: var(--color-neutral-800);
   --secondary-foreground: var(--color-neutral-50);
@@ -156,7 +156,7 @@
   --sidebar-background: var(--color-neutral-900);
   --sidebar-foreground: var(--color-neutral-50);
   --sidebar-primary: var(--color-custom-orange);
-  --sidebar-primary-foreground: var(--color-neutral-50);
+  --sidebar-primary-foreground: var(--color-neutral-950);
   --sidebar-accent: var(--color-neutral-800);
   --sidebar-accent-foreground: var(--color-neutral-100);
   --sidebar-border: var(--color-neutral-800);
@@ -172,5 +172,40 @@
   }
   button {
     @apply cursor-pointer;
+  }
+  h1,h2 {
+     @apply font-serif font-bold;
+  }
+}
+
+/*
+ * Cross-document view transition on navigation. The opt-in is this at-rule,
+ * not the older `<meta name="view-transition">` tag — Chrome deprecated the
+ * meta tag around version 126 in favor of this, and it silently does nothing
+ * now. `navigation: auto` covers same-origin link clicks and back/forward;
+ * an address-bar reload or a cross-origin link never gets a transition.
+ */
+@view-transition {
+  navigation: auto;
+}
+
+/*
+ * Kept as the UA's default fade rather than a custom animation; this just
+ * fixes the two things that make the default look wrong: `plus-lighter`
+ * blending flashes bright where old/new pages overlap, and the default
+ * duration is slow.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.22s;
+    animation-timing-function: ease-out;
+    mix-blend-mode: normal;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
   }
 }

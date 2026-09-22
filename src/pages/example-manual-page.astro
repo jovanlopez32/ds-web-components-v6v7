@@ -14,14 +14,14 @@ import CodeComponent from '../components/CodeComponent.astro';
 export const prerender = false;
 ---
 
-<Layout title="Ejemplo de página manual">
+<Layout title="Example of a manual page">
 	<main>
-		<h1>Cómo armar tu propia página</h1>
+		<h1>How to build your own page</h1>
 		<p class="lead">
-			Esta página no está en la base de datos. Es un archivo <code>.astro</code> normal que
-			importa <code>CodeComponent</code> y referencia los componentes que necesita por su
-			número. Los <em>pages</em> y <em>subpages</em> del admin son la navegación principal;
-			esto es la salida libre para documentar lo que quieras, como quieras.
+			This page is not in the database. It is a plain <code>.astro</code> file that
+			imports <code>CodeComponent</code> and references the components it needs by
+			their number. The admin's <em>pages</em> and <em>subpages</em> are the main navigation;
+			this is the free-form output for documenting whatever you want, however you want.
 		</p>
 
 		<pre class="snippet"><code>---
@@ -31,9 +31,9 @@ import CodeComponent from '../components/CodeComponent.astro';
 &lt;CodeComponent id="1" /&gt;</code></pre>
 
 		<p class="lead">
-			El número es el campo <strong>Referencia</strong> que muestra el editor de cada
-			componente. Props opcionales: <code>showCode={false}</code> para mostrar solo el ejemplo
-			en vivo, y <code>height="700px"</code> para ajustar el alto del marco.
+			The number is the <strong>Reference</strong> field shown by each component's
+			editor. Optional props: <code>showCode={false}</code> to show only the live
+			example, and <code>height="700px"</code> to adjust the frame's height.
 		</p>
 
 		<CodeComponent id="1" />
