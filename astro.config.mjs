@@ -20,6 +20,17 @@ function platformLessFiles() {
 
 // https://astro.build/config
 export default defineConfig({
+  // Server-rendered by default, because the navbar is not static content: it
+  // reads the `pages` table on every render, and that table is edited from
+  // /admin at any time. Under the default 'static' output a page without an
+  // explicit `prerender = false` bakes the navbar in at build time, so the
+  // links keep showing whatever the menu looked like on the last deploy —
+  // which is why the DB-backed routes were correct and the home page was not.
+  //
+  // Opt individual routes back into prerendering with `export const prerender
+  // = true` only if they render nothing that comes from the database.
+  output: 'server',
+
   integrations: [react(), vue()],
   adapter: vercel({
     // The LESS compile reads the mirrored platform files from disk at runtime.
