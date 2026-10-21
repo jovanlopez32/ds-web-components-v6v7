@@ -1,50 +1,74 @@
 import { button } from '@/components/starwind/button/variants';
 import { input } from '@/components/starwind/input/variants';
 
+/**
+ * One editable row. The panel works on a list rather than on the name -> value
+ * map that gets saved: as a map, two rows sharing a name (an empty new row next
+ * to another empty one, or "TXT_A" typed on the way to "TXT_AB" while TXT_A
+ * already exists) collapsed into one key and silently lost the other's value.
+ */
+export interface VariableRow {
+	/** Stable React key, since the name is the editable field. */
+	id: number;
+	name: string;
+	value: string;
+}
+
+let nextRowId = 0;
+
+export function toVariableRows(variables: Record<string, string>): VariableRow[] {
+	return Object.entries(variables).map(([name, value]) => ({ id: nextRowId++, name, value }));
+}
+
+/** Rows without a name are skipped; on a repeated name the last row wins. */
+export function toVariableRecord(rows: VariableRow[]): Record<string, string> {
+	return Object.fromEntries(
+		rows.filter((row) => row.name.trim()).map((row) => [row.name.trim(), row.value]),
+	);
+}
+
 interface Props {
 	/** This component's own overrides, edited here. */
-	variables: Record<string, string>;
-	onChange: (variables: Record<string, string>) => void;
+	rows: VariableRow[];
+	onChange: (rows: VariableRow[]) => void;
 	/** Global variables, shown read-only so the author sees what they inherit. */
 	globalVariables: Record<string, string>;
 	/** Names the ASP code references but nothing defines. */
 	missing: string[];
+	/** True when editing an existing component, whose variables save as they change. */
+	autosaves: boolean;
+	saveError: string | null;
 }
 
 export default function VariablesPanel({
-	variables,
+	rows,
 	onChange,
 	globalVariables,
 	missing,
+	autosaves,
+	saveError,
 }: Props) {
-	const entries = Object.entries(variables);
-
-	function rename(oldName: string, newName: string) {
-		// Rebuild in order rather than delete-then-add, so a row does not jump
-		// to the bottom of the list while it is being renamed.
-		onChange(
-			Object.fromEntries(
-				entries.map(([name, value]) => (name === oldName ? [newName, value] : [name, value])),
-			),
-		);
+	function update(id: number, changes: Partial<VariableRow>) {
+		onChange(rows.map((row) => (row.id === id ? { ...row, ...changes } : row)));
 	}
 
-	function setValue(name: string, value: string) {
-		onChange({ ...variables, [name]: value });
-	}
-
-	function remove(name: string) {
-		const next = { ...variables };
-		delete next[name];
-		onChange(next);
+	function remove(id: number) {
+		onChange(rows.filter((row) => row.id !== id));
 	}
 
 	function add(name = '') {
-		onChange({ ...variables, [name]: '' });
+		onChange([...rows, { id: nextRowId++, name, value: '' }]);
 	}
 
-	// Only offer names that are actually referenced and not yet defined
-	// anywhere, so the shortcut fills a real gap instead of adding noise.
+	// Flagged rather than blocked, so a name can pass through a duplicate
+	// while it is being typed.
+	const nameCounts = new Map<string, number>();
+	for (const row of rows) {
+		const name = row.name.trim();
+		if (name) nameCounts.set(name, (nameCounts.get(name) ?? 0) + 1);
+	}
+	const duplicates = [...nameCounts].filter(([, count]) => count > 1).map(([name]) => name);
+
 	const inheritedNames = Object.keys(globalVariables);
 
 	return (
@@ -57,9 +81,22 @@ export default function VariablesPanel({
 			</div>
 
 			<p className="variables-help">
-				These override ASP variables only in the preview, and take precedence over the
-				globals. They are not part of the published code.
+				These override ASP variables only in the preview, take precedence over the globals
+				and apply as you type. They are not part of the published code.{' '}
+				{autosaves ? (
+					'They are saved automatically.'
+				) : (
+					<>
+						They are saved with <strong>Create component</strong>.
+					</>
+				)}
 			</p>
+
+			{saveError && (
+				<p className="variables-duplicate" role="alert">
+					Couldn't save the variables: {saveError}
+				</p>
+			)}
 
 			{missing.length > 0 && (
 				<div className="variables-missing">
@@ -84,34 +121,37 @@ export default function VariablesPanel({
 				</div>
 			)}
 
-			{entries.length === 0 && <p className="variables-empty">No component-specific variables.</p>}
+			{duplicates.length > 0 && (
+				<p className="variables-duplicate" role="alert">
+					Defined more than once, only the last one is used: {duplicates.join(', ')}
+				</p>
+			)}
 
-			{entries.map(([name, value], index) => (
-				// Index-keyed on purpose: the name is the editable field, so
-				// keying by it would remount the input on every keystroke and
-				// lose focus mid-word.
-				<div className="variables-row" key={index}>
+			{rows.length === 0 && <p className="variables-empty">No component-specific variables.</p>}
+
+			{rows.map((row) => (
+				<div className="variables-row" key={row.id}>
 					<input
 						type="text"
 						className={input({ size: 'sm' })}
 						aria-label="Name"
 						placeholder="TXT_IMG_PATH"
-						value={name}
-						onChange={(event) => rename(name, event.target.value)}
+						value={row.name}
+						onChange={(event) => update(row.id, { name: event.target.value })}
 					/>
 					<input
 						type="text"
 						className={input({ size: 'sm' })}
 						aria-label="Value"
 						placeholder="value"
-						value={value}
-						onChange={(event) => setValue(name, event.target.value)}
+						value={row.value}
+						onChange={(event) => update(row.id, { value: event.target.value })}
 					/>
 					<button
 						type="button"
 						className={`${button({ variant: 'ghost', size: 'icon-sm' })} variables-remove`}
-						aria-label={`Remove ${name}`}
-						onClick={() => remove(name)}
+						aria-label={`Remove ${row.name}`}
+						onClick={() => remove(row.id)}
 					>
 						&times;
 					</button>

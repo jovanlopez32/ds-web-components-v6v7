@@ -8,10 +8,10 @@
 export interface PreviewSettings {
 	/**
 	 * External stylesheets the components need, injected as <link> tags —
-	 * icon fonts (Font Awesome, iconmonstr) and anything similar the platform
-	 * loads in its own <head>. Not the design system's compiled CSS: the
-	 * preview deliberately injects no site baseline, so a component is shown
-	 * with its own styles only.
+	 * Bootstrap 3.1.1 (the platform's grid and base styles), icon fonts
+	 * (Font Awesome, iconmonstr) and anything similar the platform loads in its
+	 * own <head>. Not a site theme's compiled CSS: beyond that baseline, a
+	 * component is shown with its own styles only.
 	 */
 	previewCssUrls: string[];
 	/** Scripts loaded before the component's own JS (jQuery lives here). */

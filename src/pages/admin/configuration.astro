@@ -40,8 +40,8 @@ const result = Astro.getActionResult(actions.settings.save);
 			<Label for="previewCssUrls">External stylesheets</Label>
 			<p class="help">
 				One URL per line, injected as <code>&lt;link&gt;</code> only in the preview —
-				never in this admin. This is where icon fonts and any external CSS the
-				platform loads in its <code>&lt;head&gt;</code> go (Font Awesome, iconmonstr).
+				never in this admin. This is where Bootstrap 3.1.1, icon fonts and any external
+				CSS the platform loads in its <code>&lt;head&gt;</code> go (Font Awesome, iconmonstr).
 				<code>//</code> URLs are pinned to <code>https:</code> automatically.
 			</p>
 			<Textarea id="previewCssUrls" name="previewCssUrls" rows="4" spellcheck="false"
@@ -50,7 +50,8 @@ const result = Astro.getActionResult(actions.settings.save);
 
 			<Label for="previewJsUrls">Scripts</Label>
 			<p class="help">
-				One URL per line, loaded before the component's JS. This is where jQuery goes.
+				One URL per line, loaded in order before the component's JS. This is where jQuery
+				goes, followed by Bootstrap's JS (it needs jQuery loaded first).
 				Vanilla JS needs nothing extra: it works the same with or without jQuery
 				loaded, so they don't need to be kept separate.
 			</p>

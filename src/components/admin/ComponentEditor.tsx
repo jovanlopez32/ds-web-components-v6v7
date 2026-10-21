@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { actions, isInputError } from 'astro:actions';
 import './ComponentEditor.css';
 import CodePane from './CodePane';
 import ComponentPreview, { type PreviewSnapshot } from './ComponentPreview';
-import VariablesPanel from './VariablesPanel';
+import VariablesPanel, { toVariableRecord, toVariableRows, type VariableRow } from './VariablesPanel';
 import type { PreviewSettings } from '../../lib/preview';
 import type { CodeLanguage } from '../../lib/format';
 import { button } from '@/components/starwind/button/variants';
@@ -67,7 +67,10 @@ export default function ComponentEditor({
 	const [lessCode, setLessCode] = useState(component?.lessCode ?? '');
 	const [jsCode, setJsCode] = useState(component?.jsCode ?? '');
 	const [mixinsCode, setMixinsCode] = useState(component?.mixinsCode ?? '');
-	const [variables, setVariables] = useState<Record<string, string>>(component?.variables ?? {});
+	const [variableRows, setVariableRows] = useState<VariableRow[]>(() =>
+		toVariableRows(component?.variables ?? {}),
+	);
+	const variables = useMemo(() => toVariableRecord(variableRows), [variableRows]);
 
 	// The preview renders this, not the live editor state. Compiling only
 	// happens when the author asks for it.
@@ -83,9 +86,54 @@ export default function ComponentEditor({
 	);
 	const [copied, setCopied] = useState(false);
 
+	// Compiling updates the preview but saves nothing, so leaving the page after
+	// only compiling used to drop every edit without a word. The snapshot of
+	// what is stored is what tells whether there is anything left unsaved.
+	const currentKey = JSON.stringify({ title, aspCode, lessCode, jsCode, mixinsCode });
+	const [savedKey, setSavedKey] = useState(currentKey);
+	const variablesKey = JSON.stringify(variables);
+	const [savedVariablesKey, setSavedVariablesKey] = useState(variablesKey);
+	const isDirty = currentKey !== savedKey || variablesKey !== savedVariablesKey;
+	// Set right before navigating away on purpose (after a create or delete).
+	const isLeaving = useRef(false);
+
+	useEffect(() => {
+		if (!isDirty) return;
+		const warn = (event: BeforeUnloadEvent) => {
+			if (!isLeaving.current) event.preventDefault();
+		};
+		window.addEventListener('beforeunload', warn);
+		return () => window.removeEventListener('beforeunload', warn);
+	}, [isDirty]);
+
+	// An existing component's variables save themselves shortly after typing
+	// stops, so they survive a reload without pressing Save changes. A new
+	// component has no row yet; its variables go in with Create component.
+	const componentId = component?.id;
+	const [variablesSaveError, setVariablesSaveError] = useState<string | null>(null);
+	useEffect(() => {
+		if (!componentId || variablesKey === savedVariablesKey) return;
+
+		const timer = setTimeout(async () => {
+			const { error: saveError } = await actions.components.updateVariables({
+				id: componentId,
+				variables,
+			});
+			if (saveError) {
+				setVariablesSaveError(saveError.message);
+				return;
+			}
+			setVariablesSaveError(null);
+			setSavedVariablesKey(variablesKey);
+		}, 600);
+
+		return () => clearTimeout(timer);
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- variablesKey stands in for variables
+	}, [componentId, variablesKey, savedVariablesKey]);
+
 	const handleCompile = useCallback(() => {
-		setSnapshot({ aspCode, lessCode, jsCode, mixinsCode, variables });
-	}, [aspCode, lessCode, jsCode, mixinsCode, variables]);
+		setSnapshot({ aspCode, lessCode, jsCode, mixinsCode });
+	}, [aspCode, lessCode, jsCode, mixinsCode]);
 
 	// Compile once on open when editing, so an existing component is visible
 	// without having to ask for it. A new component has nothing to compile.
@@ -100,8 +148,7 @@ export default function ComponentEditor({
 		(snapshot.aspCode !== aspCode ||
 			snapshot.lessCode !== lessCode ||
 			snapshot.jsCode !== jsCode ||
-			snapshot.mixinsCode !== mixinsCode ||
-			JSON.stringify(snapshot.variables) !== JSON.stringify(variables));
+			snapshot.mixinsCode !== mixinsCode);
 
 	// The preview reports missing variables on every rebuild. Bail out when the
 	// list has not actually changed, so an unchanged result cannot bounce
@@ -143,6 +190,8 @@ export default function ComponentEditor({
 
 			if (updateError) return reportSaveError(updateError);
 			setUpdatedAt(data.updatedAt);
+			setSavedKey(JSON.stringify({ title, aspCode, lessCode, jsCode, mixinsCode }));
+			setSavedVariablesKey(JSON.stringify(variables));
 			return;
 		}
 
@@ -153,6 +202,7 @@ export default function ComponentEditor({
 
 		// A freshly created component has no id in this island's state, so
 		// staying here would leave "Save" creating duplicates.
+		isLeaving.current = true;
 		window.location.href = backHref;
 	}
 
@@ -177,6 +227,7 @@ export default function ComponentEditor({
 			return;
 		}
 
+		isLeaving.current = true;
 		window.location.href = backHref;
 	}
 
@@ -204,6 +255,7 @@ export default function ComponentEditor({
 					<h1>{isEditing ? 'Edit component' : 'New component'}</h1>
 				</div>
 				<div className="editor-actions">
+					{isDirty && <span className="editor-unsaved">Unsaved changes</span>}
 					{isEditing && (
 						<button
 							type="button"
@@ -317,16 +369,19 @@ export default function ComponentEditor({
 						snapshot={snapshot}
 						settings={settings}
 						globalVariables={globalVariables}
+						variables={variables}
 						isStale={isStale}
 						onCompile={handleCompile}
 						onMissingVariables={handleMissingVariables}
 					/>
 
 					<VariablesPanel
-						variables={variables}
-						onChange={setVariables}
+						rows={variableRows}
+						onChange={setVariableRows}
 						globalVariables={globalVariables}
 						missing={missingVariables}
+						autosaves={isEditing}
+						saveError={variablesSaveError}
 					/>
 				</div>
 			</div>

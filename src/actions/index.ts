@@ -133,6 +133,26 @@ export const server = {
 			},
 		}),
 
+		// Variables only steer the preview and are not part of the published
+		// code, so the editor saves them on their own as they are typed. Going
+		// through `update` would also store whatever half-finished code is in
+		// the other tabs.
+		updateVariables: defineAction({
+			input: z.object({
+				id: z.uuid(),
+				variables: z.record(z.string(), z.string()),
+			}),
+			handler: async (input, context) => {
+				const { error } = await dbFor(context)
+					.from('components')
+					.update({ variables: input.variables })
+					.eq('id', input.id);
+
+				fail(error);
+				return { id: input.id };
+			},
+		}),
+
 		// accept: 'form' on purpose. The per-row delete button on the page
 		// detail view stays a plain <form method="POST">, so it keeps working
 		// with JavaScript disabled, while the editor island calls this same

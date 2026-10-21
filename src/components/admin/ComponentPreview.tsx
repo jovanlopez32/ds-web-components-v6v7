@@ -11,7 +11,8 @@ import type { CompileError } from '../../lib/less-server';
 import { button } from '@/components/starwind/button/variants';
 
 /**
- * The code as it was when the author last pressed Compile.
+ * The code as it was when the author last pressed Compile. Variables are not
+ * part of it: they render live, see `variables` below.
  *
  * The preview renders this, never the live editor state. Compiling is a server
  * round trip that can fail, so rebuilding on every keystroke meant errors
@@ -22,7 +23,6 @@ export interface PreviewSnapshot {
 	lessCode: string;
 	jsCode: string;
 	mixinsCode: string;
-	variables: Record<string, string>;
 }
 
 interface Props {
@@ -30,6 +30,8 @@ interface Props {
 	snapshot: PreviewSnapshot | null;
 	settings: PreviewSettings;
 	globalVariables: Record<string, string>;
+	/** The component's own variables, live from the panel rather than from the snapshot. */
+	variables: Record<string, string>;
 	/** True when the editor has changed since the snapshot was taken. */
 	isStale: boolean;
 	onCompile: () => void;
@@ -48,6 +50,7 @@ export default function ComponentPreview({
 	snapshot,
 	settings,
 	globalVariables,
+	variables,
 	isStale,
 	onCompile,
 	onMissingVariables,
@@ -66,10 +69,14 @@ export default function ComponentPreview({
 		' ',
 	);
 	const snapshotKey = snapshot === null ? null : JSON.stringify(snapshot);
-	const globalsKey = JSON.stringify(globalVariables);
+	const variablesKey = JSON.stringify(mergeVariables(globalVariables, variables));
+
+	// The CSS the last compile produced, tagged with the snapshot it belongs to
+	// so the render below never pairs new markup with a stale stylesheet.
+	const [compiled, setCompiled] = useState<{ key: string; css: string } | null>(null);
 
 	useEffect(() => {
-		if (snapshot === null) return;
+		if (snapshot === null || snapshotKey === null) return;
 
 		let cancelled = false;
 		setIsCompiling(true);
@@ -77,7 +84,7 @@ export default function ComponentPreview({
 		(async () => {
 			// Compiled on the server so the component's LESS can use the real
 			// platform mixins, which live in 112 files on disk.
-			const { data: compiled, error: compileError } = await actions.preview.compileLess({
+			const { data, error: compileError } = await actions.preview.compileLess({
 				lessCode: snapshot.lessCode,
 				mixinsCode: snapshot.mixinsCode,
 			});
@@ -86,34 +93,37 @@ export default function ComponentPreview({
 			if (cancelled) return;
 
 			setIsCompiling(false);
-			setLessError(
-				compileError ? { message: compileError.message, line: null } : compiled.error,
-			);
-
-			const resolved = resolveAsp(
-				snapshot.aspCode,
-				mergeVariables(globalVariables, snapshot.variables),
-			);
-			setPlaceholders(resolved.placeholders);
-			onMissingVariables(resolved.missing);
-
-			// A previous run's error must not stick around and be blamed on
-			// the code the author just fixed.
-			setRuntimeError(null);
-
-			setSrcDoc(
-				buildPreviewDocument(
-					{ markup: resolved.code, css: compiled?.css ?? '', jsCode: snapshot.jsCode },
-					settings,
-				),
-			);
+			setLessError(compileError ? { message: compileError.message, line: null } : data.error);
+			setCompiled({ key: snapshotKey, css: data?.css ?? '' });
 		})();
 
 		return () => {
 			cancelled = true;
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- the *Key values stand in for the objects
-	}, [snapshotKey, settingsKey, globalsKey]);
+	}, [snapshotKey]);
+
+	// Rendering the ASP is local and instant, so unlike the LESS it does not
+	// wait for Compile: a variable typed in the panel shows up straight away.
+	useEffect(() => {
+		if (snapshot === null || compiled === null || compiled.key !== snapshotKey) return;
+
+		const resolved = resolveAsp(snapshot.aspCode, mergeVariables(globalVariables, variables));
+		setPlaceholders(resolved.placeholders);
+		onMissingVariables(resolved.missing);
+
+		// A previous run's error must not stick around and be blamed on
+		// the code the author just fixed.
+		setRuntimeError(null);
+
+		setSrcDoc(
+			buildPreviewDocument(
+				{ markup: resolved.code, css: compiled.css, jsCode: snapshot.jsCode },
+				settings,
+			),
+		);
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- the *Key values stand in for the objects
+	}, [compiled, variablesKey, settingsKey]);
 
 	// The sandboxed document reports its own uncaught errors by postMessage,
 	// because its console is invisible from here and a component that throws

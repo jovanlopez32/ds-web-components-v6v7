@@ -4,14 +4,17 @@ import type { VariantProps } from "tailwind-variants";
 
 import { textarea } from "./variants";
 
-type Props = Omit<HTMLAttributes<"textarea">, "children"> & VariantProps<typeof textarea>;
+type Props = HTMLAttributes<"textarea"> & VariantProps<typeof textarea>;
 
 const { size, "data-slot": dataSlot = "textarea", class: className, ...rest } = Astro.props;
+
+// The slot is the textarea's initial value. Starwind ships this self-closing,
+// which silently dropped any content passed in, so a form editing a saved value
+// (admin/configuration) rendered empty and saving it wiped the setting.
 ---
 
 <textarea
   data-sw-textarea
   class={textarea({ size, class: className })}
   data-slot={dataSlot}
-  {...rest}
-/>
+  {...rest}><slot /></textarea>

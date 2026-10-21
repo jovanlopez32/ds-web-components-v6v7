@@ -2,14 +2,20 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { PreviewSettings } from './preview';
 
 /**
- * Used when the settings row cannot be read. jQuery 1.10.2 is the version the
- * team ships in production, so an unconfigured preview still behaves like the
- * real platform rather than silently dropping jQuery and making every
- * component look broken.
+ * Used when the settings row cannot be read. jQuery 1.10.2, Bootstrap 3.1.1 and
+ * Font Awesome 4.7 (the `fa fa-*` classes) are what the team ships in
+ * production, so an unconfigured preview still behaves like the real platform
+ * rather than silently dropping them and making every component look broken.
  */
 export const DEFAULT_PREVIEW_SETTINGS: PreviewSettings = {
-	previewCssUrls: [],
-	previewJsUrls: ['//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js'],
+	previewCssUrls: [
+		'//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.1.1/css/bootstrap.min.css',
+		'//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css',
+	],
+	previewJsUrls: [
+		'//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js',
+		'//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.1.1/js/bootstrap.min.js',
+	],
 	previewLessVariables: '',
 };
 
