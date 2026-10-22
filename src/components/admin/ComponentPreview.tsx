@@ -42,6 +42,7 @@ interface Props {
 const REGION_LABELS: Record<string, string> = {
 	less: 'LESS',
 	mixins: 'Mixins',
+	sitewide: 'Sitewide styles',
 	'site-variables': 'Site variables',
 	platform: 'Platform',
 };

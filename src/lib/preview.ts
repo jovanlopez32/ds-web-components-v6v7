@@ -10,8 +10,8 @@ export interface PreviewSettings {
 	 * External stylesheets the components need, injected as <link> tags —
 	 * Bootstrap 3.1.1 (the platform's grid and base styles), icon fonts
 	 * (Font Awesome, iconmonstr) and anything similar the platform loads in its
-	 * own <head>. Not a site theme's compiled CSS: beyond that baseline, a
-	 * component is shown with its own styles only.
+	 * own <head>. Not a site theme's compiled CSS: the site's own base styles
+	 * come from `previewSitewideLess` instead.
 	 */
 	previewCssUrls: string[];
 	/** Scripts loaded before the component's own JS (jQuery lives here). */
@@ -23,6 +23,12 @@ export interface PreviewSettings {
 	 * Used by compileComponentLess() in src/lib/less-server.ts.
 	 */
 	previewLessVariables: string;
+	/**
+	 * The site's sitewide LESS — its main.less: resets such as `a:hover` without
+	 * underline, base inputs, buttons. On the platform every component renders
+	 * on top of these, so the preview compiles them ahead of the component.
+	 */
+	previewSitewideLess: string;
 }
 
 export interface PreviewInput {

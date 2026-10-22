@@ -83,7 +83,12 @@ export const server = {
 				// frequently longer than compiling.
 				const settings = await loadPreviewSettingsCached(dbFor(context));
 
-				return compileComponentLess(lessCode, settings.previewLessVariables, mixinsCode);
+				return compileComponentLess(
+					lessCode,
+					settings.previewLessVariables,
+					mixinsCode,
+					settings.previewSitewideLess,
+				);
 			},
 		}),
 	},
@@ -364,6 +369,7 @@ export const server = {
 				previewCssUrls: optionalText,
 				previewJsUrls: optionalText,
 				previewLessVariables: optionalText,
+				previewSitewideLess: optionalText,
 			}),
 			handler: async (input, context) => {
 				const { error } = await dbFor(context)
@@ -372,6 +378,7 @@ export const server = {
 						preview_css_urls: splitLines(input.previewCssUrls),
 						preview_js_urls: splitLines(input.previewJsUrls),
 						preview_less_variables: input.previewLessVariables,
+						preview_sitewide_less: input.previewSitewideLess,
 						updated_at: new Date().toISOString(),
 					})
 					.eq('id', true);

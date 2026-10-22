@@ -73,6 +73,20 @@ const result = Astro.getActionResult(actions.settings.save);
 				>{settings.previewLessVariables}</Textarea
 			>
 
+			<Label for="previewSitewideLess">Sitewide styles (LESS)</Label>
+			<p class="help">
+				The site's <code>main.less</code>: the base styles every component sits on in
+				the real platform (links without underline on hover, inputs, buttons…). It is
+				compiled on its own, with the platform, the v7 template mixins
+				(<code>.soc-icon-sizer()</code>, <code>.calendar-styler()</code>) and the site
+				variables above, and its CSS goes into the preview ahead of each component's.
+				Mixins defined here are not available to components: those go in each
+				component's Mixins tab.
+			</p>
+			<Textarea id="previewSitewideLess" name="previewSitewideLess" rows="16" spellcheck="false"
+				>{settings.previewSitewideLess}</Textarea
+			>
+
 			<Button type="submit" variant="primary" class="save-button">Save configuration</Button>
 		</form>
 	</main>

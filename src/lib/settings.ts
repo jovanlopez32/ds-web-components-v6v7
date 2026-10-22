@@ -17,12 +17,13 @@ export const DEFAULT_PREVIEW_SETTINGS: PreviewSettings = {
 		'//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.1.1/js/bootstrap.min.js',
 	],
 	previewLessVariables: '',
+	previewSitewideLess: '',
 };
 
 export async function loadPreviewSettings(db: SupabaseClient): Promise<PreviewSettings> {
 	const { data } = await db
 		.from('settings')
-		.select('preview_css_urls, preview_js_urls, preview_less_variables')
+		.select('preview_css_urls, preview_js_urls, preview_less_variables, preview_sitewide_less')
 		.eq('id', true)
 		.maybeSingle();
 
@@ -34,6 +35,7 @@ export async function loadPreviewSettings(db: SupabaseClient): Promise<PreviewSe
 		previewCssUrls: data.preview_css_urls ?? [],
 		previewJsUrls: data.preview_js_urls ?? [],
 		previewLessVariables: data.preview_less_variables ?? '',
+		previewSitewideLess: data.preview_sitewide_less ?? '',
 	};
 }
 
