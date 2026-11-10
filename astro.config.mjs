@@ -8,13 +8,21 @@ import vue from '@astrojs/vue';
 import vercel from '@astrojs/vercel';
 
 const PLATFORM_LESS_DIR = './src/v6v7/_platform-less-ref';
+// The v7 site template that the sitewide compile imports (TEMPLATE_DIR in
+// src/lib/less-server.ts). Also opened by path at runtime, so it must ship too.
+const TEMPLATE_LESS_DIR = './src/v6v7/less/themes/blackdiamondhd';
 
-/** Every mirrored platform LESS file, as paths relative to the project root. */
-function platformLessFiles() {
-	return readdirSync(PLATFORM_LESS_DIR, { recursive: true, encoding: 'utf8' })
+/** Every .less file under a directory, as paths relative to the project root. */
+function lessFilesIn(dir) {
+	return readdirSync(dir, { recursive: true, encoding: 'utf8' })
 		.filter((entry) => entry.endsWith('.less'))
 		// Windows readdir returns backslashes; the adapter wants forward slashes.
-		.map((entry) => `${PLATFORM_LESS_DIR}/${entry.split('\\').join('/')}`);
+		.map((entry) => `${dir}/${entry.split('\\').join('/')}`);
+}
+
+/** Every LESS file the server-side compile reads from disk. */
+function platformLessFiles() {
+	return [...lessFilesIn(PLATFORM_LESS_DIR), ...lessFilesIn(TEMPLATE_LESS_DIR)];
 }
 
 
